@@ -1,37 +1,40 @@
 #include "SIMPLE.h"
 
-SpMat calcMomentumMatrix(const State &state) {
-  return {};
+SpMat SIMPLE::calculateReynoldsStress(const State &state) {
 }
 
-static State &relax(State &state, State &oldState, double factor) {
-  state.p = state.p * factor + oldState.p * (1 - factor);
-  state.k = state.k * factor + oldState.k * (1 - factor);
-  state.o = state.o * factor + oldState.o * (1 - factor);
-  return state;
-}
+State SIMPLE::step(const State &state)
+{
+  // Calculate Momentum Coefficients
+  double alpha = parameters.ALPHA;
+  double rho = parameters.RHO;
+  double mu = parameters.MU;
 
-State SIMPLE::step(const State &state) {
-  // Calculate Velocities
-  SpMat M = calcMomentumMatrix(state);
+  const auto &oldU = state.u.asDiagonal();
+  const auto &oldV = state.v.asDiagonal();
 
   const SpMat &Gx = getGradientMatrixX();
   const SpMat &Gy = getGradientMatrixY();
 
+  SpMat M = rho * (oldU * Gx - mu * Gx * Gx + oldV * Gy - mu * Gy * Gy);
+
+  assert(M.rows() == M.cols() && "M is not square");
+
+  // Compute Velocities
   Eigen::BiCGSTAB<SpMat> solver;
   solver.compute(M);
 
   VectorXd px = Gx * state.p;
   VectorXd py = Gx * state.p;
 
-  VectorXd newU = solver.solve(px);
-  VectorXd newV = solver.solve(py);
+  VectorXd newU = solver.solve(-px);
+  VectorXd newV = solver.solve(-py);
 
   // Define Terms
-  const Eigen::Diagonal<SpMat> A = M.diagonal();
-  const Eigen::Inverse<Eigen::Diagonal<SpMat>> A_I = A.inverse();
+  auto A = M.diagonal();
+  auto A_I = A.inverse();
 
-  // dim(H) = n x 1
+  // dim(H) = [n x 1]
   auto Hx = A * newU + px;
   auto Hy = A * newV + py;
 
@@ -43,5 +46,5 @@ State SIMPLE::step(const State &state) {
   VectorXd u = A_I * Hx - A_I * Gx * p;
   VectorXd v = A_I * Hy - A_I * Gy * p;
 
-  return State{u, v, p, state.k, state.o}.relax(state, parameters.ALPHA);
+  return State{u, v, p, state.k, state.o}.relax(state, alpha);
 }

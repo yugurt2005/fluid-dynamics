@@ -4,14 +4,14 @@
 #include "Eigen/Dense"
 #include "Eigen/IterativeLinearSolvers"
 #include "Eigen/Sparse"
-#include <tuple>
 
 #include "State.h"
 #include "Parameters.h"
 
 using Eigen::MatrixXd;
-using Eigen::SparseMatrix;
 using Eigen::VectorXd;
+using Eigen::SparseMatrix;
+using Eigen::Triplet;
 
 typedef SparseMatrix<double> SpMat;
 
@@ -24,10 +24,10 @@ private:
   const SpMat &getGradientMatrixX();
   const SpMat &getGradientMatrixY();
 
-  SpMat calcMomentumMatrix(const State &state);
-
 public:
   SIMPLE(Parameters parameters);
+
+  SpMat calculateReynoldsStress(const State &state);
 
   State step(const State &state);
 
