@@ -7,27 +7,39 @@
 
 #include "State.h"
 #include "Parameters.h"
+#include "FVM.h"
+
+#include "../interfaces/IHalo.h"
 
 using Eigen::MatrixXd;
-using Eigen::VectorXd;
 using Eigen::SparseMatrix;
-using Eigen::Triplet;
+using Eigen::Vector2d;
+using Eigen::VectorXd;
 
 typedef SparseMatrix<double> SpMat;
 
-class SIMPLE {
+class SIMPLE
+{
 private:
   Parameters parameters;
 
-  double getDensity();
+  FVM &fvm;
+  IHalo &grid;
 
-  const SpMat &getGradientMatrixX();
-  const SpMat &getGradientMatrixY();
+  inline const SpMat &getGradientMatrixX() { return fvm.getGradientX(); }
+  inline const SpMat &getGradientMatrixY() { return fvm.getGradientY(); };
+
+  inline const vector<std::pair<int, Vector2d>> &getWalls() {
+    return grid.getWalls();
+  };
 
 public:
-  SIMPLE(Parameters parameters);
+  SIMPLE(Parameters parameters, FVM &fvm, IHalo &grid);
 
-  SpMat calculateReynoldsStress(const State &state);
+  void applyWalls(VectorXd &u, VectorXd &v);
+
+  SpMat calculateReynoldsStressX(const State &state);
+  SpMat calculateReynoldsStressY(const State &state);
 
   State step(const State &state);
 

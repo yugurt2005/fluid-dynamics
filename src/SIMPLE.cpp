@@ -1,7 +1,22 @@
 #include "SIMPLE.h"
 
-SpMat SIMPLE::calculateReynoldsStress(const State &state) {
+SIMPLE::SIMPLE(Parameters parameters, FVM &fvm, IHalo &grid)
+    : parameters(parameters), fvm(fvm), grid(grid) {}
+
+void SIMPLE::applyWalls(VectorXd &u, VectorXd &v)
+{
+  const auto &walls = getWalls();
+
+  for (const auto &wall : walls)
+  {
+    u(wall.first) = wall.second.x();
+    v(wall.first) = wall.second.y();
+  }
 }
+
+SpMat SIMPLE::calculateReynoldsStressX(const State &state) {}
+
+SpMat SIMPLE::calculateReynoldsStressY(const State &state) {}
 
 State SIMPLE::step(const State &state)
 {
@@ -18,29 +33,29 @@ State SIMPLE::step(const State &state)
 
   SpMat M = rho * (oldU * Gx - mu * Gx * Gx + oldV * Gy - mu * Gy * Gy);
 
-  assert(M.rows() == M.cols() && "M is not square");
+  SpMat tau_x = calculateReynoldsStressX(state);
+  SpMat tau_y = calculateReynoldsStressY(state);
 
   // Compute Velocities
   Eigen::BiCGSTAB<SpMat> solver;
   solver.compute(M);
 
-  VectorXd px = Gx * state.p;
-  VectorXd py = Gx * state.p;
-
-  VectorXd newU = solver.solve(-px);
-  VectorXd newV = solver.solve(-py);
+  VectorXd newU = solver.solve(tau_x - Gx * state.p);
+  VectorXd newV = solver.solve(tau_y - Gy * state.p);
+  applyWalls(newU, newV);
 
   // Define Terms
   auto A = M.diagonal();
   auto A_I = A.inverse();
 
   // dim(H) = [n x 1]
-  auto Hx = A * newU + px;
-  auto Hy = A * newV + py;
+  auto Hx = A * newU - M * newU;
+  auto Hy = A * newV - M * newV;
 
   // Correct Pressure
   solver.compute(Gx * A_I * Gx + Gy * A_I * Gy);
-  VectorXd p = solver.solve(Gx * A_I * Hx + Gy * A_I * Hy);
+  VectorXd p =
+      solver.solve(Gx * A_I * Hx + Gy * A_I * Hy + Gx * tau_x + Gy * tau_y);
 
   // Correct Velocities
   VectorXd u = A_I * Hx - A_I * Gx * p;
