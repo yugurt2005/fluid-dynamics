@@ -21,7 +21,10 @@ class FVM
 {
 private:
   int n;
+  int m;
+
   IGrid &grid;
+
   SparseMatrix<double> gradientX;
   SparseMatrix<double> gradientY;
 
@@ -31,16 +34,28 @@ private:
 
   inline VectorXd getAdjDy(int index) { return grid.getAdjDy(index); };
 
+  inline vector<Face> &getFaces() { return grid.getFaces(); }
+
 public:
   FVM(IGrid &grid);
 
-  VectorXd calcLeastSquaresGradient(int n, const VectorXd &dx, const VectorXd &dy);
+  void init();
+
+  static VectorXd calcLeastSquaresGradient(int n, const VectorXd &dx, const VectorXd &dy);
 
   void createGradientMatrix();
 
   inline const SpMat &getGradientX() { return gradientX; };
 
   inline const SpMat &getGradientY() { return gradientY; };
+
+  double interpolateAt(int index, Face &face, double phi, double dx, double dy);
+
+  VectorXd interpolate(VectorXd &phi, VectorXd &flux);
+
+  double calcMassFluxAt(int index, Face &face, Vector2d velocity);
+
+  VectorXd calcMassFlux(const VectorXd &u, const VectorXd &v);
 };
 
 #endif // CFD_FVM_H

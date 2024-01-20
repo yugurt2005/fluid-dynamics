@@ -2,18 +2,20 @@
 
 Grid::Grid(
     int n,
-    vector<std::pair<int, int>> connections,
+    int m,
+    vector<Face> &faces,
     vector<double> &cellX,
     vector<double> &cellY,
-    vector<std::pair<int, Vector2d>> &walls)
+    vector<std::pair<int, Vector2d>> &walls) : n(n), m(m)
 {
   adjacents = new vector<int>[n];
-  for (auto [u, v] : connections)
+  for (Face &face : faces)
   {
-    adjacents[u].push_back(v);
-    adjacents[v].push_back(u);
+    adjacents[face.l].push_back(face.r);
+    adjacents[face.r].push_back(face.l);
   }
 
+  this->faces = faces;
   this->cellX = cellX;
   this->cellY = cellY;
   this->walls = walls;
@@ -29,22 +31,32 @@ vector<int> Grid::getAdjacents(int index)
   return adjacents[index];
 }
 
-VectorXd Grid::getDifference(int index, vector<double> &data)
+VectorXd Grid::getAdjDifference(int index, vector<double> &data)
 {
   VectorXd answer(data.size());
-  for (int i = 0; i < data.size(); i++)
+  for (int i = 0; i < adjacents[index].size(); i++)
   {
-    answer(i) = data[i] - data[index];
+    answer(i) = data[adjacents[index][i]] - data[index];
   }
   return answer;
 }
 
 VectorXd Grid::getAdjDx(int index)
 {
-  return getDifference(index, cellX);
+  return getAdjDifference(index, cellX);
 }
 
 VectorXd Grid::getAdjDy(int index)
 {
-  return getDifference(index, cellY);
+  return getAdjDifference(index, cellY);
+}
+
+Vector2d Grid::getCellPos(int index)
+{
+  return Vector2d(cellX[index], cellY[index]);
+}
+
+vector<Face> &Grid::getFaces()
+{
+  return faces;
 }

@@ -22,15 +22,15 @@ class SIMPLE
 {
 private:
   Parameters parameters;
-
   FVM &fvm;
-  IHalo &grid;
+  IHalo &halos;
 
   inline const SpMat &getGradientMatrixX() { return fvm.getGradientX(); }
   inline const SpMat &getGradientMatrixY() { return fvm.getGradientY(); };
 
-  inline const vector<std::pair<int, Vector2d>> &getWalls() {
-    return grid.getWalls();
+  inline const vector<std::pair<int, Vector2d>> &getWalls()
+  {
+    return halos.getWalls();
   };
 
 public:

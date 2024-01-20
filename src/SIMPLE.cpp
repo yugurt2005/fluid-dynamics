@@ -1,7 +1,7 @@
 #include "SIMPLE.h"
 
 SIMPLE::SIMPLE(Parameters parameters, FVM &fvm, IHalo &grid)
-    : parameters(parameters), fvm(fvm), grid(grid) {}
+    : parameters(parameters), fvm(fvm), halos(grid) {}
 
 void SIMPLE::applyWalls(VectorXd &u, VectorXd &v)
 {
@@ -20,46 +20,5 @@ SpMat SIMPLE::calculateReynoldsStressY(const State &state) {}
 
 State SIMPLE::step(const State &state)
 {
-  // Calculate Momentum Coefficients
-  double alpha = parameters.ALPHA;
-  double rho = parameters.RHO;
-  double mu = parameters.MU;
-
-  const auto &oldU = state.u.asDiagonal();
-  const auto &oldV = state.v.asDiagonal();
-
-  const SpMat &Gx = getGradientMatrixX();
-  const SpMat &Gy = getGradientMatrixY();
-
-  SpMat M = rho * (oldU * Gx - mu * Gx * Gx + oldV * Gy - mu * Gy * Gy);
-
-  SpMat tau_x = calculateReynoldsStressX(state);
-  SpMat tau_y = calculateReynoldsStressY(state);
-
-  // Compute Velocities
-  Eigen::BiCGSTAB<SpMat> solver;
-  solver.compute(M);
-
-  VectorXd newU = solver.solve(tau_x - Gx * state.p);
-  VectorXd newV = solver.solve(tau_y - Gy * state.p);
-  applyWalls(newU, newV);
-
-  // Define Terms
-  auto A = M.diagonal();
-  auto A_I = A.inverse();
-
-  // dim(H) = [n x 1]
-  auto Hx = A * newU - M * newU;
-  auto Hy = A * newV - M * newV;
-
-  // Correct Pressure
-  solver.compute(Gx * A_I * Gx + Gy * A_I * Gy);
-  VectorXd p =
-      solver.solve(Gx * A_I * Hx + Gy * A_I * Hy + Gx * tau_x + Gy * tau_y);
-
-  // Correct Velocities
-  VectorXd u = A_I * Hx - A_I * Gx * p;
-  VectorXd v = A_I * Hy - A_I * Gy * p;
-
-  return State{u, v, p, state.k, state.o}.relax(state, alpha);
+  
 }
