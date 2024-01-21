@@ -1,13 +1,24 @@
 #include "FVM.h"
+#include <iostream>
 
-VectorXd FVM::calcLeastSquaresGradient(int n, const VectorXd &dx, const VectorXd &dy)
+FVM::FVM(int n, IGrid &grid) : n(n), grid(grid) {
+  createGradientMatrix();
+}
+
+MatrixXd FVM::calcLeastSquaresGradient(int n, const VectorXd &dx, const VectorXd &dy)
 {
+  assert(dx.rows() == n);
+  assert(dy.rows() == n);
+
   MatrixXd d(n, 2);
   d.col(0) = dx;
   d.col(1) = dy;
 
-  MatrixXd w =
-      (dx.array().square() * dy.array().square()).rsqrt().matrix().asDiagonal();
+  MatrixXd w = MatrixXd::Zero(n, n);
+  for (int i = 0; i < n; i++)
+  {
+    w(i, i) = 1 / Vector2d(dx(i), dy(i)).norm();
+  }
 
   MatrixXd dT = d.transpose();
   MatrixXd wT = w.transpose();
@@ -17,8 +28,8 @@ VectorXd FVM::calcLeastSquaresGradient(int n, const VectorXd &dx, const VectorXd
 
 void FVM::createGradientMatrix()
 {
-  gradientX = SpMat(n, n);
-  gradientY = SpMat(n, n);
+  dxMat = SpMat(n, n);
+  dyMat = SpMat(n, n);
 
   vector<Eigen::Triplet<double>> dxs;
   vector<Eigen::Triplet<double>> dys;
@@ -27,16 +38,15 @@ void FVM::createGradientMatrix()
   {
     vector<int> adjacents = getAdjacents(c);
 
-    VectorXd gradient = calcLeastSquaresGradient(
-      adjacents.size(),
-      getAdjDx(c),
-      getAdjDy(c)
-    );
+    MatrixXd gradient = calcLeastSquaresGradient(
+        adjacents.size(),
+        getAdjDx(c),
+        getAdjDy(c));
 
     for (int i = 0; i < adjacents.size(); i++)
     {
-      double dx = gradient(i);
-      double dy = gradient(i);
+      double dx = gradient(i, 0);
+      double dy = gradient(i, 1);
 
       dxs.emplace_back(c, adjacents[i], dx);
       dys.emplace_back(c, adjacents[i], dy);
@@ -46,6 +56,6 @@ void FVM::createGradientMatrix()
     }
   }
 
-  gradientX.setFromTriplets(dxs.begin(), dxs.end());
-  gradientY.setFromTriplets(dys.begin(), dys.end());
+  dxMat.setFromTriplets(dxs.begin(), dxs.end());
+  dyMat.setFromTriplets(dys.begin(), dys.end());
 }

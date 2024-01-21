@@ -2,7 +2,7 @@
 
 Grid::Grid(
     int n,
-    vector<std::pair<int, int>> connections,
+    vector<std::pair<int, int>> &connections,
     vector<double> &cellX,
     vector<double> &cellY,
     vector<std::pair<int, Vector2d>> &walls)
@@ -29,22 +29,27 @@ vector<int> Grid::getAdjacents(int index)
   return adjacents[index];
 }
 
-VectorXd Grid::getDifference(int index, vector<double> &data)
+VectorXd Grid::getAdjDifference(int index, vector<double> &data)
 {
-  VectorXd answer(data.size());
-  for (int i = 0; i < data.size(); i++)
+  VectorXd answer(adjacents[index].size());
+  for (int i = 0; i < adjacents[index].size(); i++)
   {
-    answer(i) = data[i] - data[index];
+    answer(i) = data[adjacents[index][i]] - data[index];
   }
   return answer;
 }
 
 VectorXd Grid::getAdjDx(int index)
 {
-  return getDifference(index, cellX);
+  return getAdjDifference(index, cellX);
 }
 
 VectorXd Grid::getAdjDy(int index)
 {
-  return getDifference(index, cellY);
+  return getAdjDifference(index, cellY);
+}
+
+vector<std::pair<int, Vector2d>> &Grid::getWalls()
+{
+  return walls;
 }

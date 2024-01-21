@@ -26,8 +26,8 @@ private:
   FVM &fvm;
   IHalo &grid;
 
-  inline const SpMat &getGradientMatrixX() { return fvm.getGradientX(); }
-  inline const SpMat &getGradientMatrixY() { return fvm.getGradientY(); };
+  inline const SpMat &getDxMat() { return fvm.getDxMat(); }
+  inline const SpMat &getDyMat() { return fvm.getDyMat(); };
 
   inline const vector<std::pair<int, Vector2d>> &getWalls() {
     return grid.getWalls();

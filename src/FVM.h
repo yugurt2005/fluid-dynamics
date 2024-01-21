@@ -2,6 +2,7 @@
 #define CFD_FVM_H
 
 #include <vector>
+#include <cassert>
 
 #include "Eigen/Core"
 #include "Eigen/Dense"
@@ -22,8 +23,8 @@ class FVM
 private:
   int n;
   IGrid &grid;
-  SparseMatrix<double> gradientX;
-  SparseMatrix<double> gradientY;
+  SparseMatrix<double> dxMat;
+  SparseMatrix<double> dyMat;
 
   inline vector<int> getAdjacents(int index) { return grid.getAdjacents(index); }
 
@@ -32,15 +33,15 @@ private:
   inline VectorXd getAdjDy(int index) { return grid.getAdjDy(index); };
 
 public:
-  FVM(IGrid &grid);
+  FVM(int n, IGrid &grid);
 
-  VectorXd calcLeastSquaresGradient(int n, const VectorXd &dx, const VectorXd &dy);
+  static MatrixXd calcLeastSquaresGradient(int n, const VectorXd &dx, const VectorXd &dy);
 
   void createGradientMatrix();
 
-  inline const SpMat &getGradientX() { return gradientX; };
+  inline const SpMat &getDxMat() { return dxMat; };
 
-  inline const SpMat &getGradientY() { return gradientY; };
+  inline const SpMat &getDyMat() { return dyMat; };
 };
 
 #endif // CFD_FVM_H

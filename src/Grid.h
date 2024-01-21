@@ -23,12 +23,12 @@ private:
 
   vector<std::pair<int, Vector2d>> walls;
 
-  VectorXd getDifference(int index, vector<double> &data);
+  VectorXd getAdjDifference(int index, vector<double> &data);
 
 public:
   Grid(
       int n,
-      vector<std::pair<int, int>> connections,
+      vector<std::pair<int, int>> &connections,
       vector<double> &cellX,
       vector<double> &cellY,
       vector<std::pair<int, Vector2d>> &walls);
@@ -41,7 +41,7 @@ public:
 
   VectorXd getAdjDy(int index) override;
 
-  vector<std::pair<int, Eigen::Vector2d>> &getWalls() override;
+  vector<std::pair<int, Vector2d>> &getWalls() override;
 };
 
 #endif // GRID_H
