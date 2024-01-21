@@ -1,5 +1,4 @@
 #include "FVM.h"
-#include <iostream>
 
 FVM::FVM(int n, IGrid &grid) : n(n), grid(grid) {
   createGradientMatrix();
@@ -45,8 +44,8 @@ void FVM::createGradientMatrix()
 
     for (int i = 0; i < adjacents.size(); i++)
     {
-      double dx = gradient(i, 0);
-      double dy = gradient(i, 1);
+      double dx = gradient(0, i);
+      double dy = gradient(1, i);
 
       dxs.emplace_back(c, adjacents[i], dx);
       dys.emplace_back(c, adjacents[i], dy);
