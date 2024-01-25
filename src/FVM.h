@@ -23,8 +23,8 @@ class FVM
 private:
   int n;
   IGrid &grid;
-  SparseMatrix<double> dxMat;
-  SparseMatrix<double> dyMat;
+  SpMat dxMat;
+  SpMat dyMat;
 
   inline vector<int> getAdjacents(int index) { return grid.getAdjacents(index); }
 
@@ -34,6 +34,8 @@ private:
 
 public:
   FVM(int n, IGrid &grid);
+
+  inline int getN() { return n; }
 
   static MatrixXd calcLeastSquaresGradient(int n, const VectorXd &dx, const VectorXd &dy);
 

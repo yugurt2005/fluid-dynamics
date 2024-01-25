@@ -1,6 +1,8 @@
 #ifndef SIMPLE_H
 #define SIMPLE_H
 
+#include <cassert>
+
 #include "Eigen/Dense"
 #include "Eigen/IterativeLinearSolvers"
 #include "Eigen/Sparse"
@@ -23,12 +25,18 @@ class SIMPLE
 private:
   Parameters parameters;
 
+  int n;
+
   FVM &fvm;
   IHalo &grid;
 
-  inline const SpMat &getDxMat() { return fvm.getDxMat(); }
+  VectorXd newU;
+  VectorXd newV;
+  SpMat M;
 
-  inline const SpMat &getDyMat() { return fvm.getDyMat(); };
+  const SpMat &getDxMat() { return fvm.getDxMat(); }
+
+  const SpMat &getDyMat() { return fvm.getDyMat(); }
 
   inline const vector<std::pair<int, Vector2d>> &getWalls() {
     return grid.getWalls();
@@ -37,11 +45,19 @@ private:
 public:
   SIMPLE(Parameters parameters, FVM &fvm, IHalo &grid);
 
+  inline VectorXd &getNewU() { return newU; }
+
+  inline VectorXd &getNewV() { return newV; }
+
   void applyWalls(VectorXd &u, VectorXd &v);
 
   SpMat calculateReynoldsStressX(const State &state);
 
   SpMat calculateReynoldsStressY(const State &state);
+
+  void calculateVelocity(const State &state);
+
+  VectorXd correctPressure(const State &state);
 
   State step(const State &state);
 

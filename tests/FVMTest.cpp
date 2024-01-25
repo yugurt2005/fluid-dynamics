@@ -8,33 +8,6 @@
 
 using Eigen::VectorXd;
 
-TEST_CASE("FVM constructor: Happy Test") {
-  //          0 1 3
-  //          - - -
-  // 3 4 5    . . . | 3
-  // 0 1 2    . . . | 1
-  int n = 6;
-  vector<std::pair<int, int>> connections = {
-      {0, 1},
-      {1, 2},
-      {3, 4},
-      {4, 5},
-      {0, 3},
-      {1, 4},
-      {2, 5},
-  };
-  vector<double> cellX = {0, 1, 3, 0, 1, 3};
-  vector<double> cellY = {1, 1, 1, 3, 3, 3};
-  vector<std::pair<int, Vector2d>> walls = {
-      {0, Vector2d(1, 0)},
-      {3, Vector2d(1, 0)},
-  };
-
-  Grid grid(n, connections, cellX, cellY, walls);
-
-  FVM fvm(n, grid);
-}
-
 TEST_CASE("FVM calcLeastSquaresGradient: Happy Test", "[Gradient]")
 {
   int n = 4;
@@ -98,7 +71,7 @@ TEST_CASE("FVM calcLeastSquaresGradient: Weights", "[Gradient]")
   REQUIRE(dy == 0.75);
 }
 
-TEST_CASE("FVM createGradientMatrix", "[Gradient]")
+TEST_CASE("FVM createGradientMatrix: Happy Test", "[Gradient]")
 {
   int n = 4;
 
@@ -118,8 +91,11 @@ TEST_CASE("FVM createGradientMatrix", "[Gradient]")
 
   FVM fvm(n, grid);
 
-  MatrixXd dxMat = fvm.getDxMat();
-  MatrixXd dyMat = fvm.getDyMat();
+  const SparseMatrix<double> &dxMat = fvm.getDxMat();
+  const SparseMatrix<double> &dyMat = fvm.getDyMat();
+
+  REQUIRE(dxMat.rows() == n);
+  REQUIRE(dyMat.rows() == n);
 
   VectorXd values(n);
   values << 1, 2, 3, 0;
@@ -129,4 +105,37 @@ TEST_CASE("FVM createGradientMatrix", "[Gradient]")
 
   REQUIRE(dxs(0) == 1);
   REQUIRE(dys(0) == 1);
+}
+
+TEST_CASE("FVM createGradientMatrix: Basic", "[Gradient]") {
+  //          0 1 3
+  //          - - -
+  // 3 4 5    . . . | 3
+  // 0 1 2    . . . | 1
+  int n = 6;
+  vector<std::pair<int, int>> connections = {
+      {0, 1},
+      {1, 2},
+      {3, 4},
+      {4, 5},
+      {0, 3},
+      {1, 4},
+      {2, 5},
+  };
+  vector<double> cellX = {0, 1, 3, 0, 1, 3};
+  vector<double> cellY = {1, 1, 1, 3, 3, 3};
+  vector<std::pair<int, Vector2d>> walls = {
+      {0, Vector2d(1, 0)},
+      {3, Vector2d(1, 0)},
+  };
+
+  Grid grid(n, connections, cellX, cellY, walls);
+
+  FVM fvm(n, grid);
+
+  const SparseMatrix<double> &dxMat = fvm.getDxMat();
+  const SparseMatrix<double> &dyMat = fvm.getDyMat();
+
+  REQUIRE(dxMat.rows() == n);
+  REQUIRE(dyMat.rows() == n);
 }
