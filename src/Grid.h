@@ -4,44 +4,46 @@
 #include "Face.h"
 
 #include "../interfaces/IGrid.h"
-#include "../interfaces/IHalo.h"
 
 using Eigen::Vector2d;
 using Eigen::VectorXd;
 
-class Grid : public IGrid, public IHalo
+class Grid : public IGrid
 {
 private:
   int n;
+  int z;
 
-  vector<int> *adjacents;
+  vector<int> *neighbors;
+
+  vector<Vector2d> centers;
 
   vector<Face> faces;
-
-  vector<double> cellX;
-  vector<double> cellY;
-
-  vector<std::pair<int, Vector2d>> walls;
-
-  VectorXd getDifference(int index, vector<double> &data);
+  VectorXd areas;
+  VectorXd nx;
+  VectorXd ny;
 
 public:
-  Grid(
-      int n,
-      vector<std::pair<int, int>> connections,
-      vector<double> &cellX,
-      vector<double> &cellY,
-      vector<std::pair<int, Vector2d>> &walls);
+  Grid(vector<Vector2d> centers, vector<Face> faces);
+      
 
   ~Grid();
 
-  vector<int> getAdjacents(int index) override;
+  inline int getN() override { return n; };
 
-  VectorXd getAdjDx(int index) override;
+  inline int getZ() override { return z; };
 
-  VectorXd getAdjDy(int index) override;
+  inline Vector2d getCenter(int index) override { return centers[index]; };
 
-  vector<std::pair<int, Eigen::Vector2d>> &getWalls() override;
+  inline const vector<int> &getNeighbors(int index) override { return neighbors[index]; };
+
+  inline const VectorXd &getAreas() override { return areas; };
+
+  inline const VectorXd &getNx() override { return nx; };
+
+  inline const VectorXd &getNy() override { return ny; };
+
+  inline const vector<Face> &getFaces() override { return faces; };
 };
 
 #endif // GRID_H

@@ -16,7 +16,7 @@ add_library(fluid_dynamics STATIC
   src/Grid.h
   src/Grid.cpp
   src/Face.h
-  interfaces/IHalo.h
+  src/Face.cpp
   interfaces/IGrid.h
   )
 

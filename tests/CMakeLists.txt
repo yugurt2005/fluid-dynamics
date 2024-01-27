@@ -2,6 +2,11 @@ find_package(Catch2 3 REQUIRED)
 
 add_executable(Tests
     FluidDynamicsTest.cpp
+    FVMTest.cpp
+    GridTest.cpp
+    FaceTest.cpp
+    GridHelper.h
+    GridHelper.cpp
 )
 
 target_link_libraries(Tests PRIVATE fluid_dynamics)

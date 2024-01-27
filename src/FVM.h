@@ -1,6 +1,7 @@
 #ifndef CFD_FVM_H
 #define CFD_FVM_H
 
+#include <cassert>
 #include <vector>
 
 #include "Eigen/Core"
@@ -9,10 +10,10 @@
 
 #include "../interfaces/IGrid.h"
 
-using Eigen::MatrixXd;
-using Eigen::SparseMatrix;
 using Eigen::Vector2d;
 using Eigen::VectorXd;
+using Eigen::MatrixXd;
+using Eigen::SparseMatrix;
 using std::vector;
 
 typedef SparseMatrix<double> SpMat;
@@ -21,26 +22,46 @@ class FVM
 {
 private:
   int n;
+  int z;
+
   IGrid &grid;
-  SparseMatrix<double> gradientX;
-  SparseMatrix<double> gradientY;
 
-  inline vector<int> getAdjacents(int index) { return grid.getAdjacents(index); }
+  SpMat adj;
+  SpMat Gx;
+  SpMat Gy;
 
-  inline VectorXd getAdjDx(int index) { return grid.getAdjDx(index); }
+  inline const VectorXd &getAreas() { return grid.getAreas(); }
 
-  inline VectorXd getAdjDy(int index) { return grid.getAdjDy(index); };
+  inline const VectorXd &getNx() { return grid.getNx(); }
+
+  inline const VectorXd &getNy() { return grid.getNy(); }
+
+  inline const vector<int> &getNeighbors(int index);
 
 public:
   FVM(IGrid &grid);
 
-  VectorXd calcLeastSquaresGradient(int n, const VectorXd &dx, const VectorXd &dy);
+  static SpMat convertDiagonal(const VectorXd &input);
 
-  void createGradientMatrix();
+  void buildAdj();
 
-  inline const SpMat &getGradientX() { return gradientX; };
+  void buildGradients();
 
-  inline const SpMat &getGradientY() { return gradientY; };
+  MatrixXd calcLeastSquaresGradient(const vector<Vector2d> &distances);
+
+  VectorXd calcMassFlux(const VectorXd &u, const VectorXd &v);
+
+  SpMat calcInterpolate();
+
+  SpMat div(const VectorXd &flux);
+
+  SpMat laplacian();
+
+  inline const SpMat &getGx() { return Gx; };
+
+  inline const SpMat &getGy() { return Gy; };
+
+  inline const SpMat &getAdj() { return adj; }
 };
 
 #endif // CFD_FVM_H

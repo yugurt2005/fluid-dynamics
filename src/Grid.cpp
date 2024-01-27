@@ -1,50 +1,46 @@
 #include "Grid.h"
 
-Grid::Grid(
-    int n,
-    vector<std::pair<int, int>> connections,
-    vector<double> &cellX,
-    vector<double> &cellY,
-    vector<std::pair<int, Vector2d>> &walls)
+Grid::Grid(vector<Vector2d> centers, vector<Face> faces)
 {
-  adjacents = new vector<int>[n];
-  for (auto [u, v] : connections)
+  this->centers = centers;
+
+  n = centers.size();
+
+  neighbors = new vector<int>[n]();
+  for (Face face : faces)
   {
-    adjacents[u].push_back(v);
-    adjacents[v].push_back(u);
+    int u = face.l;
+    int v = face.r;
+
+    assert(u < n);
+    assert(v < n);
+
+    if (u > -1 && v > -1)
+    {
+      neighbors[u].push_back(v);
+      neighbors[v].push_back(u);
+    }
   }
 
-  this->cellX = cellX;
-  this->cellY = cellY;
-  this->walls = walls;
+  this->faces = faces;
+
+  z = faces.size();
+
+  areas = VectorXd(z);
+  nx = VectorXd(z);
+  ny = VectorXd(z);
+
+  for (int i = 0; i < z; i++)
+  {
+    Face face = faces[i];
+
+    areas(i) = face.area;
+    nx(i) = face.normal.x();
+    ny(i) = face.normal.y();
+  }
 }
 
 Grid::~Grid()
 {
-  delete[] adjacents;
-}
-
-vector<int> Grid::getAdjacents(int index)
-{
-  return adjacents[index];
-}
-
-VectorXd Grid::getDifference(int index, vector<double> &data)
-{
-  VectorXd answer(data.size());
-  for (int i = 0; i < data.size(); i++)
-  {
-    answer(i) = data[i] - data[index];
-  }
-  return answer;
-}
-
-VectorXd Grid::getAdjDx(int index)
-{
-  return getDifference(index, cellX);
-}
-
-VectorXd Grid::getAdjDy(int index)
-{
-  return getDifference(index, cellY);
+  delete[] neighbors;
 }
