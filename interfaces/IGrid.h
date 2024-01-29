@@ -13,6 +13,8 @@ using std::vector;
 class IGrid
 {
 public:
+  virtual ~IGrid() {}
+
   virtual int getN() = 0;
 
   virtual int getZ() = 0;

@@ -26,7 +26,6 @@ private:
 public:
   Grid(vector<Vector2d> centers, vector<Face> faces);
       
-
   ~Grid();
 
   inline int getN() override { return n; };

@@ -9,11 +9,6 @@ FVM::FVM(IGrid &grid) : grid(grid)
   buildGradients();
 }
 
-const vector<int> &FVM::getNeighbors(int index)
-{
-  return grid.getNeighbors(index);
-}
-
 SpMat FVM::convertDiagonal(const VectorXd &input)
 {
   return input.asDiagonal().diagonal().sparseView();
@@ -21,13 +16,17 @@ SpMat FVM::convertDiagonal(const VectorXd &input)
 
 void FVM::buildAdj()
 {
-  adj = SpMat(n, n);
-  for (int c = 0; c < n; c++)
+  Adj = SpMat(n, z);
+
+  vector<Face> faces = grid.getFaces();
+  for (int i = 0; i < z; i++)
   {
-    for (int a : getNeighbors(c))
-    {
-      adj.insert(c, a) = 1;
-    }
+    Face f = faces[i];
+
+    if (f.l != -1)
+      Adj.insert(f.l, i) = +1;
+    if (f.r != -1)
+      Adj.insert(f.r, i) = -1;
   }
 }
 
@@ -101,20 +100,24 @@ VectorXd FVM::calcMassFlux(const VectorXd &u, const VectorXd &v)
     Face f = faces[i];
 
     // Upwind Differencing
-    auto interpolate = [&](int index) {
+    auto interpolate = [&](int index)
+    {
       Vector2d center = grid.getCenter(index);
       double nu = u(index) + du(index) * (f.center.x() - center.x());
       double nv = v(index) + dv(index) * (f.center.y() - center.y());
       return Vector2d(nu, nv);
     };
 
+    if (f.l == -1 || f.r == -1)
+      continue;
+
     Vector2d flux;
-    if (f.l != -1 && (flux = interpolate(f.l)).dot(f.normal) > 0)
+    if ((flux = interpolate(f.l)).dot(f.normal) > 0)
     {
       uF(i) += flux.x();
       vF(i) += flux.y();
     }
-    if (f.r != -1 && (flux = interpolate(f.r)).dot(f.normal) < 0)
+    if ((flux = interpolate(f.r)).dot(f.normal) < 0)
     {
       uF(i) += flux.x();
       vF(i) += flux.y();
@@ -128,14 +131,7 @@ VectorXd FVM::calcMassFlux(const VectorXd &u, const VectorXd &v)
   return areas.cwiseProduct(uF.cwiseProduct(nx) + vF.cwiseProduct(ny));
 }
 
-SpMat FVM::div(const VectorXd &flux)
-{
-  assert(flux.size() == z);
-
-  return adj * convertDiagonal(flux);
-}
-
-SpMat FVM::laplacian()
+SpMat FVM::laplacian(const VectorXd &gamma)
 {
   SpMat areas = convertDiagonal(getAreas());
   SpMat nx = convertDiagonal(getNx());

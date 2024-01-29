@@ -6,7 +6,7 @@
 
 #include "../src/Grid.h"
 
-Grid buildRectangularGrid(int rows, int cols);
+Grid buildRectangularGrid(int rows, int cols, double size);
 
 
 #endif // GRIDHELPER_H
