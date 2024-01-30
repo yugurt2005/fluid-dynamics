@@ -13,6 +13,8 @@ SIMPLE::SIMPLE(Parameters parameters, FVM &fvm)
 
 void SIMPLE::calculateVelocity(const State &state)
 {
+  // TODO: volume
+
   double alpha = parameters.ALPHA;
   double rho = parameters.RHO;
   double mu = parameters.MU;
@@ -44,8 +46,8 @@ void SIMPLE::calculateVelocity(const State &state)
   Eigen::BiCGSTAB<SpMat> solver;
   solver.compute(M);
 
-  newU = solver.solve(Gx * state.p);
-  newV = solver.solve(Gy * state.p);
+  newU = solver.solve(-Gx * state.p);
+  newV = solver.solve(-Gy * state.p);
 
   std::cout << "SIMPLE: Correct Velocity\n";
   VectorXd temp = Gx * state.p;
@@ -72,7 +74,7 @@ VectorXd SIMPLE::correctPressure(const State &state) {
   auto Hx = A * newU - M * newU;
   auto Hy = A * newV - M * newV;
 
-  SpMat lhs = fvm.calcLaplacian(M.diagonal());
+  SpMat lhs = fvm.calcLaplacian(M.diagonal().cwiseInverse());
   VectorXd temp = fvm.getAdj() * fvm.calcMassFlux(Hx, Hy);
 
   for (int i = 0; i < n; i++) {
@@ -111,38 +113,46 @@ State SIMPLE::step(const State &state)
 
   calculateVelocity(state);
 
-  // // Define Terms
-  // const SpMat &Gx = getDxMat();
-  // const SpMat &Gy = getDyMat();
+  // Define Terms
+  const SpMat &Gx = getDxMat();
+  const SpMat &Gy = getDyMat();
 
-  // auto A = M.diagonal().asDiagonal();
-  // auto A_I = A.inverse();
+  auto A = M.diagonal().asDiagonal();
+  auto A_I = A.inverse();
 
-  // // dim(H) = [n x 1]
-  // auto Hx = A * newU - M * newU;
-  // auto Hy = A * newV - M * newV;
+  // dim(H) = [n x 1]
+  auto Hx = A * newU - M * newU;
+  auto Hy = A * newV - M * newV;
 
-  // auto p = correctPressure(state);
+  auto p = correctPressure(state);
 
-  // std::cout << "New Pressure Gradients: \n";
-  // VectorXd temp = Gx * p;
-  // for (int i = 0; i < n; i++) {
-  //   std::cout << temp(i) << " ";
-  // }
-  // std::cout << std::endl;
-  // temp = Gy * p;
-  // for (int i = 0; i < n; i++) {
-  //   std::cout << temp(i) << " ";
-  // }
-  // std::cout << std::endl;
-  // std::cout << std::endl;
+  std::cout << "New Pressures: \n";
+  for (int i = 0; i < n; i++) {
+    std::cout << p(i) << " ";
+  }
+  std::cout << std::endl;
+  std::cout << std::endl;
 
-  // // Correct Velocities
-  // VectorXd u = A_I * Hx - A_I * Gx * p;
-  // VectorXd v = A_I * Hy - A_I * Gy * p;
+  // Correct Velocities
+  VectorXd u = A_I * Hx - A_I * Gx * p;
+  VectorXd v = A_I * Hy - A_I * Gy * p;
 
-  // return State{u, v, p, state.k, state.o}.relax(state, alpha);
-  return {};
+  std::cout << "New Velocities: \n";
+  for (int i = 0; i < n; i++) {
+    std::cout << u(i) << " ";
+  }
+  std::cout << std::endl;
+  for (int i = 0; i < n; i++) {
+    std::cout << v(i) << " ";
+  }
+  std::cout << std::endl;
+  std::cout << std::endl;
+
+  // TODO: temp, assuming 2x3
+  u(0) = 1;
+  u(3) = 1;
+
+  return State{u, v, p, state.k, state.o}.relax(state, alpha);
 }
 
 State SIMPLE::loop(const State &state, int iterations)

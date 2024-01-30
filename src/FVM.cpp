@@ -143,16 +143,13 @@ VectorXd FVM::calcMassFlux(const VectorXd &u, const VectorXd &v)
   {
     Face f = faces[i];
 
-    if (f.l == -1 || f.r == -1)
-      continue;
-
     Vector2d flux;
-    if ((flux = interpolate(f.l, f)).dot(f.normal) > 0)
+    if (f.l != -1 && (flux = interpolate(f.l, f)).dot(f.normal) > 0)
     {
       uF(i) += flux.x();
       vF(i) += flux.y();
     }
-    if ((flux = interpolate(f.r, f)).dot(f.normal) < 0)
+    if (f.r != -1 && (flux = interpolate(f.r, f)).dot(f.normal) < 0)
     {
       uF(i) += flux.x();
       vF(i) += flux.y();
@@ -190,9 +187,8 @@ SpMat FVM::calcInterpolate(const VectorXd &flux) {
     else if (flux(i) < 0) 
       node = f.r;
 
-    if (node == -1) {
-      continue;
-    }
+    if (f.l == -1) node = f.r;
+    if (f.r == -1) node = f.l;
 
     Vector2d displacement = f.center - grid.getCenter(node);
     
