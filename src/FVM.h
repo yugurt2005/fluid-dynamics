@@ -43,6 +43,10 @@ private:
 public:
   FVM(IGrid &grid);
 
+  inline int getN() { return n; }
+
+  inline int getZ() { return z; }
+
   static SpMat convertDiagonal(const VectorXd &input);
 
   void buildAdj();
@@ -55,7 +59,11 @@ public:
 
   VectorXd calcMassFlux(const VectorXd &u, const VectorXd &v);
 
+  SpMat calcDiv(const VectorXd &fluxes);
+
   SpMat calcLaplacian(const VectorXd &gamma);
+
+  SpMat calcInterpolate(const VectorXd &flux);
 
   inline const SpMat &getGx() { return Gx; };
 

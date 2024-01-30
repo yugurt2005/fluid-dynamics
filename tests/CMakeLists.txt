@@ -5,6 +5,7 @@ add_executable(Tests
     FVMTest.cpp
     GridTest.cpp
     FaceTest.cpp
+    SIMPLETest.cpp
     GridHelper.h
     GridHelper.cpp
 )

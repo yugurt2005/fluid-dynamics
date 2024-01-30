@@ -126,13 +126,16 @@ TEST_CASE("FVM calcMassFlux: Happy Test")
     CHECK(div(1) == -1.5);
   }
 
-  SECTION("div(ΦΦ)") {
+  SECTION("div(ΦΦ)")
+  {
     // TODO
   }
 }
 
-TEST_CASE("FVM calcLaplacian: Happy Test") {
-  SECTION("Happy Test") {
+TEST_CASE("FVM calcLaplacian: Happy Test")
+{
+  SECTION("Happy Test")
+  {
     Grid grid = buildRectangularGrid(2, 2, 1);
     FVM fvm(grid);
 
@@ -154,7 +157,8 @@ TEST_CASE("FVM calcLaplacian: Happy Test") {
     CHECK(result(3) == 0);
   }
 
-  SECTION("Field Values") {
+  SECTION("Field Values")
+  {
     Grid grid = buildRectangularGrid(2, 2, 1);
     FVM fvm(grid);
 
@@ -170,10 +174,11 @@ TEST_CASE("FVM calcLaplacian: Happy Test") {
     SpMat laplacian = fvm.calcLaplacian(gamma);
     VectorXd result = laplacian * phi;
 
-    CHECK(result(0) == -3);
+    CHECK(result(0) == 3);
   }
 
-  SECTION("Line") {
+  SECTION("Line")
+  {
     Grid grid = buildRectangularGrid(1, 3, 1);
     FVM fvm(grid);
 
@@ -190,5 +195,57 @@ TEST_CASE("FVM calcLaplacian: Happy Test") {
     VectorXd result = laplacian * phi;
 
     CHECK(result(1) == 4);
+  }
+}
+
+TEST_CASE("FVM calcInterpolate: Happy Test")
+{
+  SECTION("Happy Test")
+  {
+    Grid grid = buildRectangularGrid(2, 2, 1);
+    FVM fvm(grid);
+
+    int n = grid.getN();
+    int z = grid.getZ();
+
+    VectorXd flux(z);
+    for (int i = 1; i < z; i++)
+    {
+      flux(i) = 0;
+    }
+    flux(0) = 1;
+
+    VectorXd phi(n);
+    phi << 1, 1, 1, 1;
+
+    SpMat interpolate = fvm.calcInterpolate(flux);
+    VectorXd result = interpolate * phi;
+
+    CHECK(result(0) == 1);
+  }
+
+  SECTION("Variable Phi") {
+    Grid grid = buildRectangularGrid(2, 2, 1);
+    FVM fvm(grid);
+
+    int n = grid.getN();
+    int z = grid.getZ();
+
+    VectorXd flux(z);
+    for (int i = 1; i < z; i++)
+    {
+      flux(i) = 0;
+    }
+    flux(0) = 1;
+    flux(1) = -1;
+
+    VectorXd phi(n);
+    phi << 1, 2, 3, 4;
+
+    SpMat interpolate = fvm.calcInterpolate(flux);
+    VectorXd result = interpolate * phi;
+
+    CHECK(result(0) == 1.5);
+    CHECK(result(1) == 2);
   }
 }

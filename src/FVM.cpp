@@ -156,7 +156,63 @@ VectorXd FVM::calcMassFlux(const VectorXd &u, const VectorXd &v)
   const VectorXd &nx = getNx();
   const VectorXd &ny = getNy();
 
+  assert(uF.rows() == z);
+  assert(vF.rows() == z);
+
   return areas.cwiseProduct(uF.cwiseProduct(nx) + vF.cwiseProduct(ny));
+}
+
+SpMat FVM::calcInterpolate(const VectorXd &flux) {
+  assert(flux.size() == z);
+
+  const vector<Face> &faces = grid.getFaces();
+
+  SpMat dxInterpolate(z, n); // multiplies by Gx * u
+  SpMat dyInterpolate(z, n); // multiplies by Gy * u
+  SpMat valInterpolate(z, n); // multiplies by u
+
+  for (int i = 0; i < z; i++) {
+    Face f = faces[i];
+
+    int node = 0;
+    if (flux(i) == 0) {
+      continue;
+    }
+    else if (flux(i) > 0) 
+      node = f.l; 
+    else if (flux(i) < 0) 
+      node = f.r;
+
+    if (node == -1) {
+      continue;
+    }
+
+    Vector2d displacement = f.center - grid.getCenter(node);
+    
+    valInterpolate.insert(i, node) = 1;
+    dxInterpolate.insert(i, node) = displacement.x();
+    dyInterpolate.insert(i, node) = displacement.y();
+  }
+  SpMat xv = dxInterpolate * Gx;
+  SpMat yv = dyInterpolate * Gy;
+  SpMat result = valInterpolate + dxInterpolate * Gx + dyInterpolate * Gy;
+
+  for (int i = 0; i < z; i++) {
+    for (int j = 0; j < n; j++) {
+      double value = result.coeff(i, j);
+      std::cout << (std::abs(value) < 0.001 ? 0.0 : value) << " ";
+    }
+    std::cout << std::endl;
+  }
+
+  return result;
+}
+
+SpMat FVM::calcDiv(const VectorXd &fluxes)
+{
+  assert(fluxes.size() == z);
+
+  return Adj * convertDiagonal(fluxes);
 }
 
 SpMat FVM::calcLaplacian(const VectorXd &gamma)
@@ -176,22 +232,22 @@ SpMat FVM::calcLaplacian(const VectorXd &gamma)
       double dRF = (f.center - grid.getCenter(f.r)).norm();
       double coeff = (dLF * gamma(f.l) + dRF * gamma(f.r)) / f.delta.norm() * laplacian(i);
 
-      result.coeffRef(f.l, f.l) += coeff;
-      result.coeffRef(f.l, f.r) -= coeff;
+      result.coeffRef(f.l, f.l) -= coeff;
+      result.coeffRef(f.l, f.r) += coeff;
 
-      result.coeffRef(f.r, f.r) += coeff;
-      result.coeffRef(f.r, f.l) -= coeff;
+      result.coeffRef(f.r, f.r) -= coeff;
+      result.coeffRef(f.r, f.l) += coeff;
 
       // std::cout << "Flux " << i << ": " << coeff << std::endl;
     }
     else if (f.l != -1)
     {
-      result.coeffRef(f.l, f.l) += gamma(f.l) * laplacian(i);
+      result.coeffRef(f.l, f.l) -= gamma(f.l) * laplacian(i);
       // std::cout << "Flux " << i << ": " << gamma(f.l) * laplacian(i) << std::endl;
     }
     else if (f.r != -1)
     {
-      result.coeffRef(f.r, f.r) += gamma(f.r) * laplacian(i);
+      result.coeffRef(f.r, f.r) -= gamma(f.r) * laplacian(i);
       // std::cout << "Flux " << i << ": " << gamma(f.r) * laplacian(i) << std::endl;
     }
     else {

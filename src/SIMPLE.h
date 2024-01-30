@@ -22,6 +22,7 @@ private:
   Parameters parameters;
 
   int n;
+  int z;
 
   FVM &fvm;
 
@@ -39,8 +40,6 @@ public:
   inline VectorXd &getNewU() { return newU; }
 
   inline VectorXd &getNewV() { return newV; }
-
-  void applyWalls(VectorXd &u, VectorXd &v);
 
   SpMat calculateReynoldsStressX(const State &state);
 
