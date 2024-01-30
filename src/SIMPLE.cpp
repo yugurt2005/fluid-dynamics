@@ -137,6 +137,20 @@ State SIMPLE::step(const State &state)
   VectorXd u = A_I * Hx - A_I * Gx * p;
   VectorXd v = A_I * Hy - A_I * Gy * p;
 
+  VectorXd divs = fvm.getAdj() * fvm.calcMassFlux(u, v);
+  double divSum = 0;
+  double divErrorSquared = 0;
+  for (int i = 0; i < n; i++) {
+    divSum += std::abs(divs(i));
+    divErrorSquared += divs(i) * divs(i);
+  }
+
+  std::cout << "--------------------------------\n";
+  std::cout << "Divergence: " << divSum << std::endl;
+  std::cout << "Divergence Error: " << divErrorSquared << std::endl;
+  std::cout << "--------------------------------\n";
+  std::cout << std::endl;
+
   std::cout << "New Velocities: \n";
   for (int i = 0; i < n; i++) {
     std::cout << u(i) << " ";
@@ -151,6 +165,7 @@ State SIMPLE::step(const State &state)
   // TODO: temp, assuming 2x3
   u(0) = 1;
   u(3) = 1;
+
 
   return State{u, v, p, state.k, state.o}.relax(state, alpha);
 }
