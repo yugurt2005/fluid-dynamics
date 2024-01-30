@@ -1,6 +1,8 @@
 #ifndef GRID_H
 #define GRID_H
 
+#include <iostream>
+
 #include "Face.h"
 
 #include "../interfaces/IGrid.h"

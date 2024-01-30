@@ -22,8 +22,6 @@ Grid::Grid(vector<Vector2d> centers, vector<Face> faces)
     }
   }
 
-  this->faces = faces;
-
   z = faces.size();
 
   areas = VectorXd(z);
@@ -38,6 +36,15 @@ Grid::Grid(vector<Vector2d> centers, vector<Face> faces)
     nx(i) = face.normal.x();
     ny(i) = face.normal.y();
   }
+
+  for (int i = 0; i < z; i++) {
+    Face &f = faces[i];
+    if (f.l == -1 || f.r == -1)
+      continue;
+    f.updateDelta(centers[f.r] - centers[f.l]);
+  }
+
+  this->faces = faces;
 }
 
 Grid::~Grid()

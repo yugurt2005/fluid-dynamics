@@ -2,6 +2,7 @@
 #define CFD_FVM_H
 
 #include <cassert>
+#include <iostream>
 #include <vector>
 
 #include "Eigen/Core"
@@ -29,7 +30,7 @@ private:
   SpMat Adj;
   SpMat Gx;
   SpMat Gy;
-  SpMat Interpolate;
+  VectorXd laplacian;
 
   inline const VectorXd &getAreas() { return grid.getAreas(); }
 
@@ -48,13 +49,13 @@ public:
 
   void buildGradients();
 
-  void buildInterpolate();
+  void buildLaplacian();
 
   MatrixXd calcLeastSquaresGradient(const vector<Vector2d> &distances);
 
   VectorXd calcMassFlux(const VectorXd &u, const VectorXd &v);
 
-  SpMat laplacian(const VectorXd &gamma);
+  SpMat calcLaplacian(const VectorXd &gamma);
 
   inline const SpMat &getGx() { return Gx; };
 

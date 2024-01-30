@@ -130,3 +130,65 @@ TEST_CASE("FVM calcMassFlux: Happy Test")
     // TODO
   }
 }
+
+TEST_CASE("FVM calcLaplacian: Happy Test") {
+  SECTION("Happy Test") {
+    Grid grid = buildRectangularGrid(2, 2, 1);
+    FVM fvm(grid);
+
+    int n = grid.getN();
+    int z = grid.getZ();
+
+    VectorXd gamma(n);
+    gamma << 1, 1, 1, 1;
+
+    VectorXd phi(n);
+    phi << 0, 0, 0, 0;
+
+    SpMat laplacian = fvm.calcLaplacian(gamma);
+    VectorXd result = laplacian * phi;
+
+    CHECK(result(0) == 0);
+    CHECK(result(1) == 0);
+    CHECK(result(2) == 0);
+    CHECK(result(3) == 0);
+  }
+
+  SECTION("Field Values") {
+    Grid grid = buildRectangularGrid(2, 2, 1);
+    FVM fvm(grid);
+
+    int n = grid.getN();
+    int z = grid.getZ();
+
+    VectorXd gamma(n);
+    gamma << 1, 1, 1, 1;
+
+    VectorXd phi(n);
+    phi << 0, 1, 2, 3;
+
+    SpMat laplacian = fvm.calcLaplacian(gamma);
+    VectorXd result = laplacian * phi;
+
+    CHECK(result(0) == -3);
+  }
+
+  SECTION("Line") {
+    Grid grid = buildRectangularGrid(1, 3, 1);
+    FVM fvm(grid);
+
+    int n = grid.getN();
+    int z = grid.getZ();
+
+    VectorXd gamma(n);
+    gamma << 1, 1, 1;
+
+    VectorXd phi(n);
+    phi << -2, 0, 6;
+
+    SpMat laplacian = fvm.calcLaplacian(gamma);
+    VectorXd result = laplacian * phi;
+
+    CHECK(result(1) == 4);
+  }
+}

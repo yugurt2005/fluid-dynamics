@@ -7,6 +7,7 @@ FVM::FVM(IGrid &grid) : grid(grid)
 
   buildAdj();
   buildGradients();
+  buildLaplacian();
 }
 
 SpMat FVM::convertDiagonal(const VectorXd &input)
@@ -18,7 +19,7 @@ void FVM::buildAdj()
 {
   Adj = SpMat(n, z);
 
-  vector<Face> faces = grid.getFaces();
+  const vector<Face> &faces = grid.getFaces();
   for (int i = 0; i < z; i++)
   {
     Face f = faces[i];
@@ -58,6 +59,32 @@ void FVM::buildGradients()
   }
 }
 
+void FVM::buildLaplacian()
+{
+  const vector<Face> &faces = grid.getFaces();
+
+  laplacian = VectorXd(z);
+  for (int i = 0; i < z; i++)
+  {
+    Face f = faces[i];
+
+    if (f.l != -1 && f.r != -1)
+    {
+      laplacian(i) = std::abs(f.delta.dot(f.normal)) / f.delta.dot(f.delta);
+    }
+    else if (f.l != -1)
+    {
+      laplacian(i) = (f.center - grid.getCenter(f.l)).norm();
+    }
+    else if (f.r != -1)
+    {
+      laplacian(i) = (f.center - grid.getCenter(f.r)).norm();
+    }
+  }
+
+  laplacian = laplacian.cwiseProduct(getAreas());
+}
+
 MatrixXd FVM::calcLeastSquaresGradient(const vector<Vector2d> &distances)
 {
   int n = distances.size();
@@ -86,7 +113,7 @@ VectorXd FVM::calcMassFlux(const VectorXd &u, const VectorXd &v)
   assert(u.size() == n);
   assert(v.size() == n);
 
-  vector<Face> faces = grid.getFaces();
+  const vector<Face> &faces = grid.getFaces();
 
   assert(faces.size() == z);
 
@@ -95,29 +122,30 @@ VectorXd FVM::calcMassFlux(const VectorXd &u, const VectorXd &v)
 
   VectorXd uF(z);
   VectorXd vF(z);
+
+  // Upwind Differencing
+  auto interpolate = [&](int i, const Face &f)
+  {
+    Vector2d center = grid.getCenter(i);
+    double nu = u(i) + du(i) * (f.center.x() - center.x());
+    double nv = v(i) + dv(i) * (f.center.y() - center.y());
+    return Vector2d(nu, nv);
+  };
+
   for (int i = 0; i < z; i++)
   {
     Face f = faces[i];
-
-    // Upwind Differencing
-    auto interpolate = [&](int index)
-    {
-      Vector2d center = grid.getCenter(index);
-      double nu = u(index) + du(index) * (f.center.x() - center.x());
-      double nv = v(index) + dv(index) * (f.center.y() - center.y());
-      return Vector2d(nu, nv);
-    };
 
     if (f.l == -1 || f.r == -1)
       continue;
 
     Vector2d flux;
-    if ((flux = interpolate(f.l)).dot(f.normal) > 0)
+    if ((flux = interpolate(f.l, f)).dot(f.normal) > 0)
     {
       uF(i) += flux.x();
       vF(i) += flux.y();
     }
-    if ((flux = interpolate(f.r)).dot(f.normal) < 0)
+    if ((flux = interpolate(f.r, f)).dot(f.normal) < 0)
     {
       uF(i) += flux.x();
       vF(i) += flux.y();
@@ -131,9 +159,57 @@ VectorXd FVM::calcMassFlux(const VectorXd &u, const VectorXd &v)
   return areas.cwiseProduct(uF.cwiseProduct(nx) + vF.cwiseProduct(ny));
 }
 
-SpMat FVM::laplacian(const VectorXd &gamma)
+SpMat FVM::calcLaplacian(const VectorXd &gamma)
 {
-  SpMat areas = convertDiagonal(getAreas());
-  SpMat nx = convertDiagonal(getNx());
-  SpMat ny = convertDiagonal(getNy());
+  assert(gamma.size() == n);
+
+  const vector<Face> &faces = grid.getFaces();
+
+  SpMat result(n, n);
+  for (int i = 0; i < z; i++)
+  {
+    Face f = faces[i];
+
+    if (f.l != -1 && f.r != -1)
+    {
+      double dLF = (f.center - grid.getCenter(f.l)).norm();
+      double dRF = (f.center - grid.getCenter(f.r)).norm();
+      double coeff = (dLF * gamma(f.l) + dRF * gamma(f.r)) / f.delta.norm() * laplacian(i);
+
+      result.coeffRef(f.l, f.l) += coeff;
+      result.coeffRef(f.l, f.r) -= coeff;
+
+      result.coeffRef(f.r, f.r) += coeff;
+      result.coeffRef(f.r, f.l) -= coeff;
+
+      // std::cout << "Flux " << i << ": " << coeff << std::endl;
+    }
+    else if (f.l != -1)
+    {
+      result.coeffRef(f.l, f.l) += gamma(f.l) * laplacian(i);
+      // std::cout << "Flux " << i << ": " << gamma(f.l) * laplacian(i) << std::endl;
+    }
+    else if (f.r != -1)
+    {
+      result.coeffRef(f.r, f.r) += gamma(f.r) * laplacian(i);
+      // std::cout << "Flux " << i << ": " << gamma(f.r) * laplacian(i) << std::endl;
+    }
+    else {
+      continue;
+    }
+  }
+
+  for (int i = 0; i < z; i++) {
+    // std::cout << i << ": " << laplacian(i) << std::endl;
+  }
+
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      double value = result.coeff(i, j);
+      // std::cout << (std::abs(value) < 0.001 ? 0.0 : value) << " ";
+    }
+    // std::cout << std::endl;
+  }
+
+  return result;
 }

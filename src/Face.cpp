@@ -18,3 +18,7 @@ Face::Face(int l, int r, Vector2d a, Vector2d b)
   this->normal = Vector2d(+vector.y(), -vector.x()).normalized();
   this->area = vector.norm();
 }
+
+void Face::updateDelta(Vector2d d) {
+  delta = d;
+}
