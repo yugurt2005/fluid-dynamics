@@ -34,28 +34,30 @@ void SIMPLE::calculateVelocity(const State &state)
 
   assert(divUU.rows() == n);
   assert(divUU.cols() == n);
+  assert(laplacian.rows() == n);
+  assert(laplacian.cols() == n);
 
   M = rho * divUU - laplacian;
 
-  // assert(M.rows() == M.cols());
+  assert(M.rows() == M.cols());
 
-  // Eigen::BiCGSTAB<SpMat> solver;
-  // solver.compute(M);
+  Eigen::BiCGSTAB<SpMat> solver;
+  solver.compute(M);
 
-  // newU = solver.solve(Gx * state.p);
-  // newV = solver.solve(Gy * state.p);
+  newU = solver.solve(Gx * state.p);
+  newV = solver.solve(Gy * state.p);
 
-  // std::cout << "SIMPLE: Correct Velocity\n";
-  // VectorXd temp = Gx * state.p;
-  // for (int i = 0; i < n; i++) {
-  //   std::cout << "| ";
-  //   for (int j = 0; j < n; j++) {
+  std::cout << "SIMPLE: Correct Velocity\n";
+  VectorXd temp = Gx * state.p;
+  for (int i = 0; i < n; i++) {
+    std::cout << "| ";
+    for (int j = 0; j < n; j++) {
       
-  //     std::cout << std::setprecision(2) << M.coeff(i, j) << " ";
-  //   }
-  //   std::cout << "| * | " << newU(i) << " | = | " << std::setprecision(2) << temp(i) << " |\n";
-  // }
-  // std::cout << std::endl;
+      std::cout << std::setprecision(2) << M.coeff(i, j) << " ";
+    }
+    std::cout << "| * | " << newU(i) << " | = | " << std::setprecision(2) << temp(i) << " |\n";
+  }
+  std::cout << std::endl;
 }
 
 VectorXd SIMPLE::correctPressure(const State &state) {

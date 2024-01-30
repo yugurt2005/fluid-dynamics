@@ -12,7 +12,14 @@ FVM::FVM(IGrid &grid) : grid(grid)
 
 SpMat FVM::convertDiagonal(const VectorXd &input)
 {
-  return input.asDiagonal().diagonal().sparseView();
+  int l = input.size();
+
+  SpMat res(l, l);
+  for (int i = 0; i < l; i++) {
+    res.insert(i, i) = input(i);
+  }
+
+  return res;
 }
 
 void FVM::buildAdj()
@@ -193,16 +200,14 @@ SpMat FVM::calcInterpolate(const VectorXd &flux) {
     dxInterpolate.insert(i, node) = displacement.x();
     dyInterpolate.insert(i, node) = displacement.y();
   }
-  SpMat xv = dxInterpolate * Gx;
-  SpMat yv = dyInterpolate * Gy;
   SpMat result = valInterpolate + dxInterpolate * Gx + dyInterpolate * Gy;
 
   for (int i = 0; i < z; i++) {
     for (int j = 0; j < n; j++) {
       double value = result.coeff(i, j);
-      std::cout << (std::abs(value) < 0.001 ? 0.0 : value) << " ";
+      // std::cout << (std::abs(value) < 0.001 ? 0.0 : value) << " ";
     }
-    std::cout << std::endl;
+    // std::cout << std::endl;
   }
 
   return result;
@@ -212,7 +217,13 @@ SpMat FVM::calcDiv(const VectorXd &fluxes)
 {
   assert(fluxes.size() == z);
 
-  return Adj * convertDiagonal(fluxes);
+  SpMat interpolate = calcInterpolate(fluxes);
+  SpMat fluxDiag = convertDiagonal(fluxes);
+
+  assert(fluxDiag.cols() == z);
+  assert(interpolate.rows() == z);
+
+  return Adj * (fluxDiag * interpolate);
 }
 
 SpMat FVM::calcLaplacian(const VectorXd &gamma)
