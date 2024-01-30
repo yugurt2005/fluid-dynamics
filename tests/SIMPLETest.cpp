@@ -80,4 +80,24 @@ TEST_CASE("SIMPLE loop: Convergence")
 
     State result = simple.loop(state, 10);
   }
+
+  SECTION("SIMPLE loop: Longer")
+  {
+    VectorXd u(n);
+    VectorXd v(n);
+    VectorXd p(n);
+    u << 1, 1, 1, 1, 1, 1;
+    v << 0, 0, 0, 0, 0, 0;
+    p << 1, 0, 0, 1, 0, 0;
+
+    State state = {
+        u,
+        v,
+        p,
+        VectorXd::Zero(n),
+        VectorXd::Zero(n),
+    };
+
+    State result = simple.loop(state, 30);
+  }
 }

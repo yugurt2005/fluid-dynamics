@@ -75,7 +75,7 @@ VectorXd SIMPLE::correctPressure(const State &state) {
   auto Hy = A * newV - M * newV;
 
   SpMat lhs = fvm.calcLaplacian(M.diagonal().cwiseInverse());
-  VectorXd temp = fvm.getAdj() * fvm.calcMassFlux(Hx, Hy);
+  VectorXd temp = fvm.getAdj() * fvm.calcMassFlux(A_I * Hx, A_I * Hy);
 
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {

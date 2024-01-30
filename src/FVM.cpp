@@ -144,6 +144,10 @@ VectorXd FVM::calcMassFlux(const VectorXd &u, const VectorXd &v)
     Face f = faces[i];
 
     Vector2d flux;
+
+    // if (f.l == -1 || f.r == -1) 
+    //   continue;
+
     if (f.l != -1 && (flux = interpolate(f.l, f)).dot(f.normal) > 0)
     {
       uF(i) += flux.x();
@@ -187,6 +191,7 @@ SpMat FVM::calcInterpolate(const VectorXd &flux) {
     else if (flux(i) < 0) 
       node = f.r;
 
+    // if (f.l == -1 || f.r == -1) continue;
     if (f.l == -1) node = f.r;
     if (f.r == -1) node = f.l;
 
