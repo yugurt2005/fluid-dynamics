@@ -4,20 +4,12 @@ project(fluid_dynamics)
 set(CMAKE_CXX_STANDARD 17)
 
 add_library(fluid_dynamics STATIC
-  src/FluidDynamics.h
-  src/FluidDynamics.cpp
-  src/SIMPLE.h
-  src/SIMPLE.cpp
-  src/Parameters.h
-  src/State.h
-  src/State.cpp
-  src/FVM.h
-  src/FVM.cpp
   src/Grid.h
   src/Grid.cpp
   src/Face.h
   src/Face.cpp
-  interfaces/IGrid.h
+  src/Edge.h
+  src/Edge.cpp
   )
 
 find_package(Eigen3 REQUIRED)

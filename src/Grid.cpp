@@ -1,53 +1,58 @@
 #include "Grid.h"
 
-Grid::Grid(vector<Vector2d> centers, vector<Face> faces)
+Grid::Grid(vector<Face> faces)
 {
-  this->centers = centers;
+  this->faces = faces;
 
-  n = centers.size();
-
-  neighbors = new vector<int>[n]();
-  for (Face face : faces)
+  m = faces.size();
+  n = 0;
+  for (Face &f : faces)
   {
-    int u = face.l;
-    int v = face.r;
+    n = std::max(n, std::max(f.l, f.r) + 1);
+  }
 
-    assert(u < n);
-    assert(v < n);
-
-    if (u > -1 && v > -1)
+  adj = new vector<Edge>[n]();
+  for (Face &f : faces)
+  {
+    if (f.l != -1)
     {
-      neighbors[u].push_back(v);
-      neighbors[v].push_back(u);
+      adj[f.l].push_back(Edge(f.r, f));
+    }
+    if (f.r != -1)
+    {
+      adj[f.r].push_back(Edge(f.l, f));
     }
   }
 
-  z = faces.size();
-
-  areas = VectorXd(z);
-  nx = VectorXd(z);
-  ny = VectorXd(z);
-
-  for (int i = 0; i < z; i++)
+  std::set<int> s;
+  for (Face &f : faces)
   {
-    Face face = faces[i];
+    if (f.isWall)
+    {
+      if (f.l != -1)
+      {
+        s.insert(f.l);
+      }
+      if (f.r != -1)
+      {
+        s.insert(f.r);
+      }
+    }
+  }
+  boundaryLayer = vector<int>(s.begin(), s.end());
 
-    areas(i) = face.area;
-    nx(i) = face.normal.x();
-    ny(i) = face.normal.y();
+  isBoundaryLayer = vector<bool>(n);
+  for (int i : boundaryLayer)
+  {
+    isBoundaryLayer[i] = true;
   }
 
-  for (int i = 0; i < z; i++) {
-    Face &f = faces[i];
-    if (f.l == -1 || f.r == -1)
-      continue;
-    f.updateDelta(centers[f.r] - centers[f.l]);
+  centers = vector<Vector2d>(n);
+  for (int i = 0; i < n; i++) {
+    Vector2d c(0, 0);
+    for (Edge &e : adj[i]) {
+      c += e.c;
+    }
+    centers[i] = c / adj[i].size();
   }
-
-  this->faces = faces;
-}
-
-Grid::~Grid()
-{
-  delete[] neighbors;
 }

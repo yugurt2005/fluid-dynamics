@@ -2,49 +2,43 @@
 #define GRID_H
 
 #include <iostream>
+#include <set>
+#include <vector>
 
 #include "Face.h"
+#include "Edge.h"
 
-#include "../interfaces/IGrid.h"
+using std::cout;
+using std::endl;
+using std::vector;
 
-using Eigen::Vector2d;
-using Eigen::VectorXd;
+class Grid {
+  int n, m;
 
-class Grid : public IGrid
-{
-private:
-  int n;
-  int z;
+  vector<Face> faces;
 
-  vector<int> *neighbors;
+  vector<Edge> *adj;
 
   vector<Vector2d> centers;
 
-  vector<Face> faces;
-  VectorXd areas;
-  VectorXd nx;
-  VectorXd ny;
+  vector<int> boundaryLayer;
+
+  vector<bool> isBoundaryLayer;
 
 public:
-  Grid(vector<Vector2d> centers, vector<Face> faces);
-      
-  ~Grid();
+  Grid(vector<Face> faces);
 
-  inline int getN() override { return n; };
+  inline int getN() const { return n; }
 
-  inline int getZ() override { return z; };
+  inline int getM() const { return m; }
 
-  inline Vector2d getCenter(int index) override { return centers[index]; };
+  inline const vector<Face> &getFaces() const { return faces; }
 
-  inline const vector<int> &getNeighbors(int index) override { return neighbors[index]; };
+  inline const vector<Edge> &getAdj(int i) const { return adj[i]; }
 
-  inline const VectorXd &getAreas() override { return areas; };
+  inline Vector2d getCenter(int i) const { return centers[i]; }
 
-  inline const VectorXd &getNx() override { return nx; };
-
-  inline const VectorXd &getNy() override { return ny; };
-
-  inline const vector<Face> &getFaces() override { return faces; };
+  Vector2d calcDis(int i, int j) const;
 };
 
 #endif // GRID_H

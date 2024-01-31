@@ -1,24 +1,26 @@
 #ifndef FACE_H
 #define FACE_H
 
-#include "Eigen/Core"
+#include <Eigen/Core>
 
 using Eigen::Vector2d;
 
-struct Face
-{
+/*
+  p
+l | r
+  q
+*/
+struct Face {
+  bool isWall;
   int l;
   int r;
-  Vector2d a;
-  Vector2d b;
-  Vector2d center;
-  Vector2d normal;
-  Vector2d delta;
+  Vector2d p;
+  Vector2d q;
+  Vector2d c;
+  Vector2d n;
   double area;
 
-  Face(int l, int r, Vector2d a, Vector2d b);
-
-  void updateDelta(Vector2d d);
+  Face(int l, int r, Vector2d p, Vector2d q);
 };
 
 #endif // FACE_H

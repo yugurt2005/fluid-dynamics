@@ -1,24 +1,18 @@
 #include "Face.h"
 
-/*
-    b
-| L | R |
-    a
-*/
-Face::Face(int l, int r, Vector2d a, Vector2d b)
+Face::Face(int l, int r, Vector2d p, Vector2d q)
 {
+  isWall = l == -1 || r == -1;
   this->l = l;
   this->r = r;
-  this->a = a;
-  this->b = b;
+  this->p = p;
+  this->q = q;
 
-  Vector2d vector = (b - a);
+  c = (p + q) / 2;
 
-  this->center = (a + b) / 2;
-  this->normal = Vector2d(+vector.y(), -vector.x()).normalized();
-  this->area = vector.norm();
-}
+  Vector2d delta = p - q;
 
-void Face::updateDelta(Vector2d d) {
-  delta = d;
+  n = Vector2d(+delta.y(), -delta.x()).normalized();
+
+  area = delta.norm();
 }
