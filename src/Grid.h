@@ -8,8 +8,6 @@
 #include "Face.h"
 #include "Edge.h"
 
-using std::cout;
-using std::endl;
 using std::vector;
 
 class Grid {
@@ -23,7 +21,7 @@ class Grid {
 
   vector<int> boundaryLayer;
 
-  vector<bool> isBoundaryLayer;
+  vector<bool> inBoundaryLayer;
 
 public:
   Grid(vector<Face> faces);
@@ -38,7 +36,11 @@ public:
 
   inline Vector2d getCenter(int i) const { return centers[i]; }
 
-  Vector2d calcDis(int i, int j) const;
+  inline bool isInBoundaryLayer(int i) const { return inBoundaryLayer[i]; }
+
+  inline bool isWall(int i) const { return faces[i].isWall; }
+
+  double calcVolume(int i) const;
 };
 
 #endif // GRID_H

@@ -20,6 +20,10 @@ struct Face {
   Vector2d n;
   double area;
 
+  double dis;
+  double lDel;
+  double rDel;
+
   Face(int l, int r, Vector2d p, Vector2d q);
 };
 

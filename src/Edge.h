@@ -8,7 +8,8 @@
 using Eigen::Vector2d;
 
 struct Edge {
-  int adj;
+  int to;
+  int index;
 
   bool isWall;
 
@@ -16,9 +17,12 @@ struct Edge {
   Vector2d q;
   Vector2d c;
   Vector2d n;
-  double area;
+  double a;
 
-  Edge(int adj, const Face &face);
+  double d;
+  double dis;
+
+  Edge(int to, int index, const Face &face);
 };
 
 #endif // EDGE_H

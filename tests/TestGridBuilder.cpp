@@ -147,3 +147,5 @@ TEST_CASE("GridBuilder - buildTriangularGrid: Edge Normals") {
     CHECK(grid.getAdj(1)[0].n == Vector2d(-1, -1).normalized());
   }
 }
+
+// TODO: distance tests
