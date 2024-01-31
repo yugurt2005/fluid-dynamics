@@ -12,6 +12,8 @@ add_library(fluid_dynamics STATIC
   src/Edge.cpp
   src/FVM.h
   src/FVM.cpp
+  src/Debug.h
+  src/Debug.cpp
   )
 
 find_package(Eigen3 REQUIRED)

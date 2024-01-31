@@ -23,6 +23,8 @@ class Grid {
 
   vector<bool> inBoundaryLayer;
 
+  vector<double> volumes;
+
 public:
   Grid(vector<Face> faces);
 
@@ -40,7 +42,7 @@ public:
 
   inline bool isWall(int i) const { return faces[i].isWall; }
 
-  double calcVolume(int i) const;
+  inline double getVolume(int i) const { return volumes[i]; };
 };
 
 #endif // GRID_H

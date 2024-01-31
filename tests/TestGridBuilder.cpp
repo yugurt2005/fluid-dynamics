@@ -13,6 +13,17 @@ TEST_CASE("GridBuilder - buildRectangularGrid: Happy Test") {
   REQUIRE(grid.getM() == n * (m + 1) + m * (n + 1));
 }
 
+TEST_CASE("GridBuilder - buildRectangularGrid: Adjacent Count") {
+  int n = 2;
+  int m = 2;
+  double w = 1;
+  double h = 1;
+  Grid grid = GridBuilder::buildRectangularGrid(n, m, w, h);
+
+  for (int i = 0; i < grid.getN(); i++)
+    CHECK(grid.getAdj(0).size() == 4);
+}
+
 TEST_CASE("GridBuilder - buildRectangularGrid: Cell Centers") {
   SECTION("1 x 1") {
     int n = 2;
@@ -70,6 +81,28 @@ TEST_CASE("GridBuilder - buildRectangularGrid: Edge Normals") {
   }
 }
 
+TEST_CASE("GridBuilder - buildRectangularGrid: Volumes") {
+  SECTION("1 x 1") {
+    int n = 2;
+    int m = 2;
+    double w = 1;
+    double h = 1;
+    Grid grid = GridBuilder::buildRectangularGrid(n, m, w, h);
+
+    CHECK(grid.getVolume(0) == w * h);
+  }
+
+  SECTION("2.5 x 1.5") {
+    int n = 2;
+    int m = 2;
+    double w = 2.5;
+    double h = 1.5;
+    Grid grid = GridBuilder::buildRectangularGrid(n, m, w, h);
+
+    CHECK(grid.getVolume(0) == w * h);
+  }
+}
+
 TEST_CASE("GridBuilder - buildTriangularGrid: Happy Test") {
   int n = 2;
   int m = 2;
@@ -79,6 +112,17 @@ TEST_CASE("GridBuilder - buildTriangularGrid: Happy Test") {
 
   REQUIRE(grid.getN() == n * m * 2);
   REQUIRE(grid.getM() == n * (m + 1) + m * (n + 1) + n * m);
+}
+
+TEST_CASE("GridBuilder - buildTriangularGrid: Adjacent Count") {
+  int n = 2;
+  int m = 2;
+  double w = 1;
+  double h = 1;
+  Grid grid = GridBuilder::buildTriangularGrid(n, m, w, h);
+
+  for (int i = 0; i < grid.getN(); i++)
+    CHECK(grid.getAdj(0).size() == 3);
 }
 
 TEST_CASE("GridBuilder - buildTriangularGrid: Cell Centers") {
@@ -136,7 +180,7 @@ TEST_CASE("GridBuilder - buildTriangularGrid: Face Normals") {
 }
 
 TEST_CASE("GridBuilder - buildTriangularGrid: Edge Normals") {
-  SECTION("1.5 x 2.5") {
+  SECTION("2.5 x 2.5") {
     int n = 2;
     int m = 2;
     double w = 2.5;
@@ -148,4 +192,39 @@ TEST_CASE("GridBuilder - buildTriangularGrid: Edge Normals") {
   }
 }
 
-// TODO: distance tests
+TEST_CASE("GridBuilder - buildTriangularGrid: Distances") {
+  SECTION("1.5 x 2.5") {
+    int n = 2;
+    int m = 2;
+    double w = 1.5;
+    double h = 2.5;
+    Grid grid = GridBuilder::buildTriangularGrid(n, m, w, h);
+
+    Face face = grid.getFaces()[0];
+    CHECK(face.lDel == (grid.getCenter(0) - face.c).norm());
+    CHECK(face.rDel == (grid.getCenter(1) - face.c).norm());
+    CHECK(face.dis == (grid.getCenter(0) - grid.getCenter(1)).norm());
+  }
+}
+
+TEST_CASE("GridBuilder - buildTriangularGrid: Volumes") {
+  SECTION("1 x 1") {
+    int n = 2;
+    int m = 2;
+    double w = 1;
+    double h = 1;
+    Grid grid = GridBuilder::buildTriangularGrid(n, m, w, h);
+
+    CHECK(grid.getVolume(0) == w * h / 2);
+  }
+
+  SECTION("2.5 x 1.5") {
+    int n = 2;
+    int m = 2;
+    double w = 2.5;
+    double h = 1.5;
+    Grid grid = GridBuilder::buildTriangularGrid(n, m, w, h);
+
+    CHECK(grid.getVolume(0) == w * h / 2);
+  }
+}

@@ -33,7 +33,7 @@ Grid::Grid(vector<Face> faces)
   centers = vector<Vector2d>(n);
   for (int i = 0; i < m; i++)
   {
-    Face &face = faces[i];
+    const Face &face = faces[i];
     int l = face.l;
     int r = face.r;
 
@@ -64,12 +64,21 @@ Grid::Grid(vector<Face> faces)
   this->faces = faces;
 
   adj = new vector<Edge>[n]();
-  for (int i = 0; i < n; i++)
+  for (int i = 0; i < m; i++)
   {
     const Face &f = faces[i];
     if (f.l != -1)
       adj[f.l].push_back(Edge(f.r, i, f));
     if (f.r != -1)
       adj[f.r].push_back(Edge(f.l, i, f));
+  }
+
+  volumes = vector<double>(n);
+  for (int i = 0 ; i < n; i++)
+  {
+    for (const Edge &e : adj[i])
+    {
+      volumes[i] += e.a * e.c.dot(e.n) / 2;
+    }
   }
 }

@@ -4,10 +4,11 @@
 #include <cassert>
 #include <tuple>
 
-#include "Grid.h"
-
 #include "Eigen/Dense"
 #include "Eigen/Sparse"
+
+#include "Grid.h"
+#include "Debug.h"
 
 using Eigen::VectorXd;
 

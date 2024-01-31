@@ -1,6 +1,7 @@
 #include "FVM.h"
 
-FVM::FVM(const Grid &grid): grid(grid) {
+FVM::FVM(const Grid &grid) : grid(grid)
+{
   n = grid.getN();
   m = grid.getM();
 }
@@ -32,19 +33,23 @@ std::tuple<VectorXd, VectorXd> FVM::calcDf(const VectorXd &phi)
   VectorXd dx(n);
   VectorXd dy(n);
 
-  for (int i = 0; i < n; i++) {
-    for (const Edge &e : grid.getAdj(i)) {
-      if (!e.isWall) {
+  for (int i = 0; i < n; i++)
+  {
+    for (const Edge &e : grid.getAdj(i))
+    {
+      if (!e.isWall)
+      {
         dx(i) += sigma(e.index) * e.a * e.n.x();
         dy(i) += sigma(e.index) * e.a * e.n.y();
       }
-      else {
+      else
+      {
         dx(i) = 0;
         dy(i) = 0;
       }
     }
-    dx(i) /= grid.calcVolume(i);
-    dy(i) /= grid.calcVolume(i);
+    dx(i) /= grid.getVolume(i);
+    dy(i) /= grid.getVolume(i);
   }
 
   return {dx, dy};
@@ -52,33 +57,50 @@ std::tuple<VectorXd, VectorXd> FVM::calcDf(const VectorXd &phi)
 
 SpMat FVM::laplacian(const VectorXd &gamma)
 {
+  for (int i = 0; i < m; i++)
+    assert(std::abs(gamma(i)) > 1e-9);
+
   VectorXd flux(m);
 
   const vector<Face> &faces = grid.getFaces();
-  for (int i = 0; i < m; i++) {
+  for (int i = 0; i < m; i++)
+  {
     const Face &f = faces[i];
     int l = f.l;
     int r = f.r;
 
-    if (!f.isWall) {
-      flux(i) = 1 / (f.lDel / gamma(l) + f.rDel / gamma(r)) * f.area;
+    if (!f.isWall)
+    {
+      flux(i) = 1.0 / (f.lDel / gamma(l) + f.rDel / gamma(r)) * f.area;
     }
-    else if (f.l != -1) {
+    else if (f.l != -1)
+    {
       flux(i) = gamma(l) * f.area / f.lDel;
     }
-    else if (f.r != -1) {
+    else if (f.r != -1)
+    {
       flux(i) = gamma(r) * f.area / f.rDel;
     }
   }
 
   SpMat res(n, n);
-  for (int i = 0; i < n; i++) {
-    for (const Edge &e : grid.getAdj(i)) {
-      int a = e.to;
-      res.coeffRef(i, a) -= flux(e.index);
-      res.coeffRef(i, i) += flux(e.index);
+  for (int i = 0; i < n; i++)
+  {
+    for (const Edge &e : grid.getAdj(i))
+    {
+      if (!e.isWall)
+      {
+        int a = e.to;
+        res.coeffRef(i, a) += flux(e.index);
+        res.coeffRef(i, i) -= flux(e.index);
+      }
+      else {
+        res.coeffRef(i, i) -= flux(e.index);
+      }
     }
   }
+
+  // Debug::debugSpMat(res);
 
   return res;
 }

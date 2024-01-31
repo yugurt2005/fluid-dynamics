@@ -4,6 +4,7 @@ add_executable(Tests
   GridBuilder.h
   GridBuilder.cpp
   TestGridBuilder.cpp
+  TestFVM.cpp
 )
 
 target_link_libraries(Tests PRIVATE fluid_dynamics)
