@@ -57,8 +57,8 @@ std::tuple<VectorXd, VectorXd> FVM::calcDf(const VectorXd &phi)
 
 SpMat FVM::laplacian(const VectorXd &gamma)
 {
-  for (int i = 0; i < m; i++)
-    assert(std::abs(gamma(i)) > 1e-9);
+  for (int i = 0; i < n; i++)
+    assert(std::abs(gamma(i)) > 1e-9 && "The gamma coefficients must be non-zero");
 
   VectorXd flux(m);
 
@@ -83,7 +83,7 @@ SpMat FVM::laplacian(const VectorXd &gamma)
     }
   }
 
-  SpMat res(n, n);
+  SpMat M(n, n);
   for (int i = 0; i < n; i++)
   {
     for (const Edge &e : grid.getAdj(i))
@@ -91,16 +91,16 @@ SpMat FVM::laplacian(const VectorXd &gamma)
       if (!e.isWall)
       {
         int a = e.to;
-        res.coeffRef(i, a) += flux(e.index);
-        res.coeffRef(i, i) -= flux(e.index);
+        M.coeffRef(i, a) += flux(e.index);
+        M.coeffRef(i, i) -= flux(e.index);
       }
       else {
-        res.coeffRef(i, i) -= flux(e.index);
+        M.coeffRef(i, i) -= flux(e.index);
       }
     }
   }
 
-  // Debug::debugSpMat(res);
+  // Debug::debugSpMat(M);
 
-  return res;
+  return M;
 }

@@ -13,7 +13,7 @@ TEST_CASE("FVM - laplacian: f(x) = x*x - 2", "[laplacian]")
   Grid grid = GridBuilder::buildRectangularGrid(n, m, w, h);
   FVM fvm(grid);
 
-  VectorXd gamma = VectorXd::Ones(grid.getM());
+  VectorXd gamma = VectorXd::Ones(grid.getN());
 
   VectorXd phi(n * m);
   phi << -2, 0, 6;
@@ -36,7 +36,7 @@ TEST_CASE("FVM - laplacian: f(x, y) = x + y", "[laplacian]")
   Grid grid = GridBuilder::buildRectangularGrid(n, m, w, h);
   FVM fvm(grid);
 
-  VectorXd gamma = VectorXd::Ones(grid.getM());
+  VectorXd gamma = VectorXd::Ones(grid.getN());
 
   VectorXd phi(n * m);
   for (int i = 0; i < n; i++)
@@ -75,7 +75,7 @@ TEST_CASE("FVM - laplacian: f(x, y) = x*x * y*y", "[laplacian]")
     Grid grid = GridBuilder::buildRectangularGrid(n, m, w, h);
     FVM fvm(grid);
 
-    VectorXd gamma = VectorXd::Ones(grid.getM());
+    VectorXd gamma = VectorXd::Ones(grid.getN());
 
     VectorXd phi(n * m);
     for (int i = 0; i < n; i++)
@@ -107,7 +107,7 @@ TEST_CASE("FVM - laplacian: f(x, y) = x*x * y*y", "[laplacian]")
     Grid grid = GridBuilder::buildRectangularGrid(n, m, w, h);
     FVM fvm(grid);
 
-    VectorXd gamma = VectorXd::Ones(grid.getM());
+    VectorXd gamma = VectorXd::Ones(grid.getN());
 
     VectorXd phi(n * m);
     for (int i = 0; i < n; i++)
@@ -132,3 +132,4 @@ TEST_CASE("FVM - laplacian: f(x, y) = x*x * y*y", "[laplacian]")
     }
   }
 }
+
