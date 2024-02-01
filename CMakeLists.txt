@@ -4,14 +4,12 @@ project(fluid_dynamics)
 set(CMAKE_CXX_STANDARD 17)
 
 add_library(fluid_dynamics STATIC
-  src/Grid.h
-  src/Grid.cpp
-  src/Face.h
-  src/Face.cpp
+  src/Mesh.h
+  src/Mesh.cpp
+  src/Cell.h
+  src/Cell.cpp
   src/Edge.h
   src/Edge.cpp
-  src/FVM.h
-  src/FVM.cpp
   src/Debug.h
   src/Debug.cpp
   )

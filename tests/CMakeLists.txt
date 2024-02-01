@@ -1,10 +1,6 @@
 find_package(Catch2 3 REQUIRED)
 
 add_executable(Tests
-  GridBuilder.h
-  GridBuilder.cpp
-  TestGridBuilder.cpp
-  TestFVM.cpp
   TestPDE.cpp
 )
 
