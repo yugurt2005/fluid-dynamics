@@ -6,13 +6,14 @@
 #include "../src/Face.h"
 
 class ISurface {
-  virtual double getDis(int index) = 0;
+public:
+  virtual double getDis(int index) const = 0;
 
-  virtual double getDis(int index, int cell) = 0;
+  virtual double getDis(int index, int cell) const = 0;
 
-  virtual std::optional<double> getFixed(int index) = 0;
+  virtual std::optional<double> getFixed(int index) const = 0;
 
-  virtual const std::vector<Face> &getFaces() = 0;
+  virtual const std::vector<Face> &getFaces() const = 0;
 };
 
 #endif // ISURFACE_H

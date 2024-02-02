@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 add_library(fluid_dynamics STATIC
   interfaces/IGrid.h
   interfaces/ISurface.h
+  src/FVM.h
+  src/FVM.cpp
   src/Grid.h
   src/Grid.cpp
   src/Edge.h

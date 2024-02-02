@@ -13,9 +13,11 @@ struct Edge {
   Vector n;
   double a;
 
-  Edge();
+  Edge() = default;
 
   Edge(int to, int i, const Face &f);
+
+  bool isWall() const;
 };
 
 #endif // EDGE_H

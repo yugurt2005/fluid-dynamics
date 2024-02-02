@@ -23,15 +23,15 @@ public:
 
   static void init(vector<Face> faces, IGrid &grid);
 
-  double getDis(int index) override;
+  double getDis(int index) const override;
 
-  double getDis(int index, int cell) override;
+  double getDis(int index, int cell) const override;
 
-  inline std::optional<double> getFixed(int index) override {
+  inline std::optional<double> getFixed(int index) const override {
     return fixed[index];
   };
 
-  inline const vector<Face> &getFaces() override { return faces; }
+  inline const vector<Face> &getFaces() const override { return faces; }
 };
 
 #endif // SURFACE_H
