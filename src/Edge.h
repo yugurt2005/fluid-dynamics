@@ -13,7 +13,7 @@ struct Edge {
   Vector n;
   double a;
 
-  Edge() = default;
+  Edge();
 
   Edge(int to, int i, const Face &f);
 

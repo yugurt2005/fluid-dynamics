@@ -1,8 +1,20 @@
 #include "Surface.h"
 
+int Surface::n;
+int Surface::m;
+vector<Face> Surface::faces;
+vector<double> Surface::dis;
+vector<double> Surface::disL;
+vector<double> Surface::disR;
+
 Surface::Surface(vector<std::pair<int, double>> fixed)
 {
-  this->fixed.resize(n, std::nullopt);
+  int count = 0;
+  for (auto &f : fixed) {
+    count = std::max(count, f.first);
+  }
+
+  this->fixed.resize(++count);
   for (auto &f : fixed)
   {
     this->fixed[f.first] = f.second;
@@ -12,7 +24,7 @@ Surface::Surface(vector<std::pair<int, double>> fixed)
 void Surface::init(vector<Face> faces, IGrid &grid)
 {
   n = grid.getN();
-  m = grid.getN();
+  m = grid.getM();
 
   dis = vector<double>(m);
   disL = vector<double>(m);

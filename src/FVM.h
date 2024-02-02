@@ -7,6 +7,7 @@
 #include "Eigen/Dense"
 #include "Eigen/Sparse"
 
+#include "Debug.h"
 #include "../interfaces/IGrid.h"
 #include "../interfaces/ISurface.h"
 

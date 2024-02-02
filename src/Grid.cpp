@@ -7,8 +7,8 @@ Grid::Grid(const vector<Face> &faces)
 
   for (const Face &f : faces)
   {
-    n = std::max(m, f.l);
-    n = std::max(m, f.r);
+    n = std::max(n, f.l + 1);
+    n = std::max(n, f.r + 1);
   }
 
   volume = new double[n];
@@ -20,7 +20,8 @@ Grid::Grid(const vector<Face> &faces)
     const Face &f = faces[i];
     if (f.l != -1)
     {
-      edges[f.l].push_back(Edge(f.r, i, f));
+      Edge e = Edge(f.r, i, f);
+      edges[f.l].push_back(e);
     }
     if (f.r != -1)
     {

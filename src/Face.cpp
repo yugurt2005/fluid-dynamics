@@ -10,8 +10,8 @@ Face::Face(int l, int r, Vector p, Vector q)
 
   c = (p + q) / 2;
 
-  Vector d = q - p;
-  n = {d.y(), -d.x()};
+  Vector d = p - q;
+  n = Vector(d.y(), -d.x()).normalized();
 
   a = d.norm();
 }

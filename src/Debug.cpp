@@ -31,7 +31,7 @@ void Debug::debug2d(const VectorXd &input, int n, int m, std::string name)
   {
     for (int j = 0; j < m; j++)
     {
-      print(input(i));
+      print(input(i * m + j));
       cout << " ";
     }
     cout << endl;

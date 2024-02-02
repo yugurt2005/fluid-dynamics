@@ -102,8 +102,8 @@ std::tuple<SpMat, VectorXd> FVM::laplacian(const VectorXd &gamma, ISurface &surf
         M.coeffRef(i, i) -= flux(e.i);
 
         double k = surface.getFixed(e.i).value_or(0);
-        if (k) {
-          b(i) -= k * e.a / surface.getDis(e.i, i);
+        if (k != 0) {
+          b(i) += k * e.a / surface.getDis(e.i, i);
         }
       }
     }

@@ -13,7 +13,7 @@ Edge::Edge(int to, int i, const Face &f)
   if (f.r == to)
     n = f.n;
   if (f.l == to)
-    n = -f.n;
+    n = f.n * -1;
 }
 
 bool Edge::isWall() const
