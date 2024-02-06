@@ -15,7 +15,7 @@ VectorXd FVM::linear(const VectorXd &phi, ISurface &surface)
     {
       if (e.isWall())
       {
-        res(e.i) = surface.getFixed(e.i).value_or(phi(i));
+        res(e.i) = surface.getFixed(e.i).value_or(0);
       }
       else
       {
@@ -47,6 +47,22 @@ std::tuple<VectorXd, VectorXd> FVM::calcDf(const VectorXd &phi, ISurface &surfac
   return {dx, dy};
 }
 
+VectorXd FVM::calcDiv(const VectorXd &u, const VectorXd &v, ISurface &uSf, ISurface &vSf)
+{
+  VectorXd uF = linear(u, uSf);
+  VectorXd vF = linear(v, vSf);
+
+  VectorXd res(n);
+  for (int i = 0; i < n; i++)
+  {
+    for (const Edge &e : grid.getAdj(i))
+    {
+      res(i) += Vector(uF(e.i), vF(e.i)).dot(e.n);
+    }
+  }
+  return res;
+}
+
 std::tuple<SpMat, VectorXd> FVM::laplacian(const VectorXd &gamma, ISurface &surface)
 {
   for (int i = 0; i < n; i++)
@@ -72,15 +88,11 @@ std::tuple<SpMat, VectorXd> FVM::laplacian(const VectorXd &gamma, ISurface &surf
     }
     else
     {
-      if (!surface.getFixed(i).has_value())
-      {
-        flux(i) = 0;
-      }
-      else if (f.l != -1)
+      if (f.l != -1)
       {
         flux(i) = gamma(l) * f.a / surface.getDis(i, l);
       }
-      else if (f.r != -1)
+      if (f.r != -1)
       {
         flux(i) = gamma(r) * f.a / surface.getDis(i, r);
       }
@@ -101,9 +113,8 @@ std::tuple<SpMat, VectorXd> FVM::laplacian(const VectorXd &gamma, ISurface &surf
       {
         M.coeffRef(i, i) -= flux(e.i);
 
-        double k = surface.getFixed(e.i).value_or(0);
-        if (k != 0) {
-          b(i) += k * e.a / surface.getDis(e.i, i);
+        if (auto k = surface.getFixed(e.i)) {
+          b(i) += *k * e.a / surface.getDis(e.i, i);
         }
       }
     }

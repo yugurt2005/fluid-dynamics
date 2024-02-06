@@ -27,6 +27,8 @@ public:
 
   std::tuple<VectorXd, VectorXd> calcDf(const VectorXd &phi, ISurface &surface);
 
+  VectorXd calcDiv(const VectorXd &u, const VectorXd &v, ISurface &uSf, ISurface &vSf);
+
   std::tuple<SpMat, VectorXd> laplacian(const VectorXd &gamma, ISurface &surface);
 };
 
