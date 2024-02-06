@@ -199,7 +199,71 @@ TEST_CASE("PDE - Convergence: Velocity Transport")
   {
     auto [uDx, uDy] = fvm.calcDf(u, uSf);
     VectorXd fu = fvm.calcDiv(u, v, uSf, vSf).cwiseProduct(u) + uDx.cwiseProduct(u) + uDy.cwiseProduct(v);
-    VectorXd fv = fvm.calcDiv(u, v, uSf, vSf).cwiseProduct(v) + uDx.cwiseProduct(u) + uDy.cwiseProduct(v);
+
+    auto [vDx, vDy] = fvm.calcDf(v, vSf);
+    VectorXd fv = fvm.calcDiv(u, v, uSf, vSf).cwiseProduct(v) + vDx.cwiseProduct(u) + vDy.cwiseProduct(v);
+
+    VectorXd uRes = uSolver.solve(fu - bu);
+    VectorXd vRes = vSolver.solve(fv - bv);
+
+    Debug::debugResiduals(uRes, u, "u");
+    Debug::debugResiduals(vRes, v, "v");
+
+    u = (1 - alpha) * u + (alpha) * uRes;
+    v = (1 - alpha) * v + (alpha) * vRes;
+
+    Debug::debug2d(u, rows, cols);
+    Debug::debug2d(v, rows, cols);
+  }
+}
+
+TEST_CASE("PDE - Convergence: Velocity Transport (1)")
+{
+  int rows = 5;
+  int cols = 5;
+  double w = 1;
+  double h = 1;
+  vector<Face> faces = GridBuilder::buildRectangularGrid(rows, cols, w, h);
+
+  Grid grid = Grid(faces);
+  int n = grid.getN();
+  int m = grid.getM();
+
+  Surface::init(faces, grid);
+
+  vector<std::pair<int, double>> uFixed;
+  for (int i = 0; i < m; i++)
+    uFixed.push_back({i, 1});
+  Surface uSf = Surface(uFixed);
+
+  vector<std::pair<int, double>> vFixed;
+  for (int i = 0; i < m; i++)
+    vFixed.push_back({i, -1});
+  Surface vSf = Surface(vFixed);
+
+  FVM fvm(grid);
+
+  VectorXd u = VectorXd::Zero(n);
+  VectorXd v = VectorXd::Ones(n);
+
+  auto [Mu, bu] = fvm.laplacian(VectorXd::Ones(n), uSf);
+  Eigen::BiCGSTAB<SpMat> uSolver;
+  uSolver.compute(Mu);
+
+  auto [Mv, bv] = fvm.laplacian(VectorXd::Ones(n), vSf);
+  Eigen::BiCGSTAB<SpMat> vSolver;
+  vSolver.compute(Mv);
+
+  double alpha = 0.6;
+
+  int iterations = 20;
+  while (iterations--)
+  {
+    auto [uDx, uDy] = fvm.calcDf(u, uSf);
+    VectorXd fu = fvm.calcDiv(u, v, uSf, vSf).cwiseProduct(u) + uDx.cwiseProduct(u) + uDy.cwiseProduct(v);
+
+    auto [vDx, vDy] = fvm.calcDf(v, vSf);
+    VectorXd fv = fvm.calcDiv(u, v, uSf, vSf).cwiseProduct(v) + vDx.cwiseProduct(u) + vDy.cwiseProduct(v);
 
     VectorXd uRes = uSolver.solve(fu - bu);
     VectorXd vRes = vSolver.solve(fv - bv);
@@ -231,60 +295,76 @@ TEST_CASE("PDE - Convergence: Interdependence")
 
   vector<std::pair<int, double>> pFixed;
   for (int i = 0; i < m; i++)
-    pFixed.push_back({i, 0});
+    pFixed.push_back({i, 1});
   Surface pSf = Surface(pFixed);
 
   vector<std::pair<int, double>> uFixed;
-  for (int i = 0; i < m; i++)
-    uFixed.push_back({i, 0});
+  for (int i = 0; i < m; i++) {
+    if (faces[i].c.x() == 0)
+      uFixed.push_back({i, 1});
+    if (faces[i].c.x() == cols)
+      uFixed.push_back({i, 2});
+  }
   Surface uSf = Surface(uFixed);
 
   vector<std::pair<int, double>> vFixed;
   for (int i = 0; i < m; i++)
-    vFixed.push_back({i, 0});
+    vFixed.push_back({i, -1});
   Surface vSf = Surface(vFixed);
 
   FVM fvm(grid);
 
-  VectorXd p = VectorXd::Ones(n);
-  VectorXd u = VectorXd::Ones(n);
-  VectorXd v = VectorXd::Ones(n);
+  VectorXd u = VectorXd::Zero(n);
+  VectorXd v = VectorXd::Zero(n);
+  VectorXd p = VectorXd::Zero(n);
 
-  VectorXd uS = VectorXd::Ones(n);
-  VectorXd vS = VectorXd::Ones(n);
+  auto [Mu, bu] = fvm.laplacian(VectorXd::Ones(n), uSf);
+  Eigen::BiCGSTAB<SpMat> uSolver;
+  uSolver.compute(Mu);
 
-  for (int i = 0; i < rows; i++)
-  {
-    for (int j = 0; j < cols; j++) {
-      uS(i * cols + j) = i;
-      vS(i * cols + j) = j;
-    }
+  auto [Mv, bv] = fvm.laplacian(VectorXd::Ones(n), vSf);
+  Eigen::BiCGSTAB<SpMat> vSolver;
+  vSolver.compute(Mv);
+
+  auto [Mp, bp] = fvm.laplacian(VectorXd::Ones(n), pSf);
+  Eigen::BiCGSTAB<SpMat> pSolver;
+  pSolver.compute(Mp);
+
+  VectorXd uS(n);
+  for (int i = 0; i < rows; i++) {
+    uS(i * cols + 3) = 1;
   }
-
-  auto [M, b] = fvm.laplacian(VectorXd::Ones(n), pSf);
-  Eigen::BiCGSTAB<SpMat> solver;
-  solver.compute(M);
 
   double alpha = 0.6;
 
-  int iterations = 10;
+  int iterations = 20;
   while (iterations--)
   {
+    auto [uDx, uDy] = fvm.calcDf(u, uSf);
+    VectorXd fu = fvm.calcDiv(u, v, uSf, vSf).cwiseProduct(u) + uDx.cwiseProduct(u) + uDy.cwiseProduct(v) + uS;
+
+    auto [vDx, vDy] = fvm.calcDf(v, vSf);
+    VectorXd fv = fvm.calcDiv(u, v, uSf, vSf).cwiseProduct(v) + vDx.cwiseProduct(u) + vDy.cwiseProduct(v);
+
+    VectorXd uRes = uSolver.solve(fu - bu);
+    VectorXd vRes = vSolver.solve(fv - bv);
+
+    Debug::debugResiduals(uRes, u, "u");
+    Debug::debugResiduals(vRes, v, "v");
+
+    u = (1 - alpha) * u + (alpha) * uRes;
+    v = (1 - alpha) * v + (alpha) * vRes;
+
     auto [pDx, pDy] = fvm.calcDf(p, pSf);
+    VectorXd fp = fvm.calcDiv(u, v, uSf, vSf).cwiseProduct(p) + pDx.cwiseProduct(u) + pDy.cwiseProduct(v);
+    VectorXd pRes = pSolver.solve(fp - bp);
 
-    u = pDx + uS;
-    v = pDy + vS;
+    Debug::debugResiduals(pRes, p, "p");
 
-    VectorXd f = fvm.calcDiv(u, v, uSf, vSf).cwiseProduct(p) + pDx.cwiseProduct(u) + pDy.cwiseProduct(v);
+    p = (1 - alpha) * p + (alpha) * pRes;
 
-    VectorXd res = solver.solve(f) - b;
-
-    Debug::debugResiduals(res, p, "");
-
-    p = (1 - alpha) * p + (alpha) * res;
-
-    Debug::debug2d(p, rows, cols, "p");
     Debug::debug2d(u, rows, cols, "u");
     Debug::debug2d(v, rows, cols, "v");
+    Debug::debug2d(p, rows, cols, "p");
   }
 }
