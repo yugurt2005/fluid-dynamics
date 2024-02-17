@@ -6,6 +6,76 @@ FVM::FVM(IGrid &grid) : grid(grid)
   m = grid.getM();
 }
 
+std::tuple<SpMat, VectorXd, SpMat, VectorXd> FVM::buildGradients(ISurface &surface)
+{
+  SpMat Gx = SpMat(n, n);
+  SpMat Gy = SpMat(n, n);
+
+  VectorXd bx = VectorXd::Zero(n);
+  VectorXd by = VectorXd::Zero(n);
+
+  for (int c = 0; c < n; c++)
+  {
+    vector<Vector> distances;
+    for (Edge e : grid.getAdj(c))
+    {
+      if (!e.isWall()) {
+        distances.push_back(grid.getCenter(e.to) - grid.getCenter(c));
+      }
+      else {
+        distances.push_back(e.c - grid.getCenter(c));
+      }
+    }
+
+    for (int i = 0; i < distances.size(); i++)
+    {
+      MatrixXd gradient = calcLeastSquaresGradient(distances);
+
+      Edge adj = grid.getAdj(c)[i];
+      if (adj.isWall())
+      {
+        bx(c) += gradient(0, i) * surface.getFixed(adj.i).value_or(0);
+        by(c) += gradient(1, i) * surface.getFixed(adj.i).value_or(0);
+
+        Gx.coeffRef(c, c) -= gradient(0, i);
+        Gy.coeffRef(c, c) -= gradient(1, i);
+      }
+      else {
+        Gx.coeffRef(c, adj.to) += gradient(0, i);
+        Gy.coeffRef(c, adj.to) += gradient(1, i);
+
+        Gx.coeffRef(c, c) -= gradient(0, i);
+        Gy.coeffRef(c, c) -= gradient(1, i);
+      }
+    }
+  }
+
+  return {Gx, bx, Gy, by};
+}
+
+MatrixXd FVM::calcLeastSquaresGradient(const vector<Vector> &distances)
+{
+  int n = distances.size();
+
+  MatrixXd d(n, 2);
+  for (int i = 0; i < n; i++)
+  {
+    d(i, 0) = distances[i].x();
+    d(i, 1) = distances[i].y();
+  }
+
+  MatrixXd w = MatrixXd::Zero(n, n);
+  for (int i = 0; i < n; i++)
+  {
+    w(i, i) = 1.0 / distances[i].norm();
+  }
+
+  MatrixXd dT = d.transpose();
+  MatrixXd wT = w.transpose();
+
+  return (dT * wT * w * d).inverse() * dT * wT * w;
+}
+
 VectorXd FVM::linear(const VectorXd &phi, ISurface &surface)
 {
   VectorXd res(m);
@@ -113,7 +183,8 @@ std::tuple<SpMat, VectorXd> FVM::laplacian(const VectorXd &gamma, ISurface &surf
       {
         M.coeffRef(i, i) -= flux(e.i);
 
-        if (auto k = surface.getFixed(e.i)) {
+        if (auto k = surface.getFixed(e.i))
+        {
           b(i) += *k * e.a / surface.getDis(e.i, i);
         }
       }
