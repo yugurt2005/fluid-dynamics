@@ -7,6 +7,8 @@ struct Edge {
   int to;
   int i;
 
+  bool side;
+
   Vector p;
   Vector q;
   Vector c;

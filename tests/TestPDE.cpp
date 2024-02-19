@@ -86,7 +86,7 @@ TEST_CASE("PDE - Convergence: Iterative Solution for One Variable")
 
     Debug::debugResiduals(res, phi, "");
 
-    phi = (1 - alpha) * phi + (alpha) * res;
+    phi = (1 - alpha) * phi + (alpha)*res;
 
     Debug::debug2d(phi, rows, cols);
   }
@@ -149,7 +149,7 @@ TEST_CASE("PDE - Convergence: Transport Equation")
 
     Debug::debugResiduals(res, p, "");
 
-    p = (1 - alpha) * p + (alpha) * res;
+    p = (1 - alpha) * p + (alpha)*res;
 
     Debug::debug2d(p, rows, cols);
   }
@@ -209,8 +209,8 @@ TEST_CASE("PDE - Convergence: Velocity Transport")
     Debug::debugResiduals(uRes, u, "u");
     Debug::debugResiduals(vRes, v, "v");
 
-    u = (1 - alpha) * u + (alpha) * uRes;
-    v = (1 - alpha) * v + (alpha) * vRes;
+    u = (1 - alpha) * u + (alpha)*uRes;
+    v = (1 - alpha) * v + (alpha)*vRes;
 
     Debug::debug2d(u, rows, cols);
     Debug::debug2d(v, rows, cols);
@@ -271,8 +271,8 @@ TEST_CASE("PDE - Convergence: Velocity Transport (1)")
     Debug::debugResiduals(uRes, u, "u");
     Debug::debugResiduals(vRes, v, "v");
 
-    u = (1 - alpha) * u + (alpha) * uRes;
-    v = (1 - alpha) * v + (alpha) * vRes;
+    u = (1 - alpha) * u + (alpha)*uRes;
+    v = (1 - alpha) * v + (alpha)*vRes;
 
     Debug::debug2d(u, rows, cols);
     Debug::debug2d(v, rows, cols);
@@ -299,7 +299,8 @@ TEST_CASE("PDE - Convergence: Interdependence")
   Surface pSf = Surface(pFixed);
 
   vector<std::pair<int, double>> uFixed;
-  for (int i = 0; i < m; i++) {
+  for (int i = 0; i < m; i++)
+  {
     if (faces[i].c.x() == 0)
       uFixed.push_back({i, 1});
     if (faces[i].c.x() == cols)
@@ -331,7 +332,8 @@ TEST_CASE("PDE - Convergence: Interdependence")
   pSolver.compute(Mp);
 
   VectorXd uS(n);
-  for (int i = 0; i < rows; i++) {
+  for (int i = 0; i < rows; i++)
+  {
     uS(i * cols + 3) = 1;
   }
 
@@ -352,8 +354,8 @@ TEST_CASE("PDE - Convergence: Interdependence")
     Debug::debugResiduals(uRes, u, "u");
     Debug::debugResiduals(vRes, v, "v");
 
-    u = (1 - alpha) * u + (alpha) * uRes;
-    v = (1 - alpha) * v + (alpha) * vRes;
+    u = (1 - alpha) * u + (alpha)*uRes;
+    v = (1 - alpha) * v + (alpha)*vRes;
 
     auto [pDx, pDy] = fvm.calcDf(p, pSf);
     VectorXd fp = fvm.calcDiv(u, v, uSf, vSf).cwiseProduct(p) + pDx.cwiseProduct(u) + pDy.cwiseProduct(v);
@@ -361,7 +363,7 @@ TEST_CASE("PDE - Convergence: Interdependence")
 
     Debug::debugResiduals(pRes, p, "p");
 
-    p = (1 - alpha) * p + (alpha) * pRes;
+    p = (1 - alpha) * p + (alpha)*pRes;
 
     Debug::debug2d(u, rows, cols, "u");
     Debug::debug2d(v, rows, cols, "v");

@@ -10,10 +10,14 @@ Edge::Edge(int to, int i, const Face &f)
   c = f.c;
   a = f.a;
 
-  if (f.r == to)
+  if (f.r == to) {
     n = f.n;
-  if (f.l == to)
+    side = 1;
+  }
+  if (f.l == to) {
     n = f.n * -1;
+    side = 0;
+  }
 }
 
 bool Edge::isWall() const

@@ -37,6 +37,10 @@ public:
   std::tuple<SpMat, VectorXd> laplacian(const VectorXd &gamma, ISurface &surface);
 
   MatrixXd calcLeastSquaresGradient(const vector<Vector> &distances);
+
+  VectorXd calcMassFlux(const VectorXd &u, const VectorXd &v, ISurface &uSf, ISurface &vSf);
+
+  std::tuple<SpMat, VectorXd> calcConvection(const VectorXd &flux, ISurface &surface);
 };
 
 #endif // FVM_H

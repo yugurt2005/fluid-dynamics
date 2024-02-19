@@ -577,6 +577,65 @@ TEST_CASE("FVM - buildGradients: x*y") {
   } 
 }
 
+TEST_CASE("FVM - buildGradients: x + y") {
+  int n = 3;
+  int m = 4;
+  double w = 1;
+  double h = 1;
+  vector<Face> faces = GridBuilder::buildRectangularGrid(n, m, w, h);
+
+  Grid grid = Grid(faces);
+
+  auto f = [](Vector position)
+  {
+    double x = position.x();
+    double y = position.y();
+    return x + y;
+  };
+  auto fx = [](Vector position) {
+    return 1;
+  };
+  auto fy = [](Vector position) {
+    return 1;
+  };
+
+  vector<std::pair<int, double>> fixed;
+  for (int i = 0; i < faces.size(); i++)
+  {
+    if (faces[i].isWall())
+    {
+      fixed.push_back({i, f(faces[i].c)});
+    }
+  }
+  Surface surface = Surface(fixed);
+  surface.init(faces, grid);
+
+  VectorXd phi(n * m);
+  for (int i = 0; i < n; i++)
+    for (int j = 0; j < m; j++)
+      phi(i * m + j) = f(grid.getCenter(i * m + j));
+
+  FVM fvm = FVM(grid);
+
+  auto [Gx, bx, Gy, by] = fvm.buildGradients(surface);
+
+  VectorXd dx = Gx * phi + bx;
+  VectorXd dy = Gy * phi + by;
+
+  // Debug::debug2d(phi, n, m, "phi");
+  // Debug::debug2d(dx, n, m, "dx");
+  // Debug::debug2d(dy, n, m, "dy");
+
+  for (int i = 0; i < n; i++)
+  {
+    for (int j = 0; j < m; j++)
+    {
+      CHECK(dx(i * m + j) == fx(grid.getCenter(i * m + j)));
+      CHECK(dy(i * m + j) == fy(grid.getCenter(i * m + j)));
+    }
+  } 
+}
+
 TEST_CASE("FVM - buildGradients: 3*x*x + 2*y*y") {
   // TODO: figure out boundaries
 
@@ -625,6 +684,9 @@ TEST_CASE("FVM - buildGradients: 3*x*x + 2*y*y") {
 
   auto [Gx, bx, Gy, by] = fvm.buildGradients(surface);
 
+  Debug::debug2d(bx, 1, n * m, "bx");
+  Debug::debug2d(by, 1, n * m, "by");
+
   VectorXd dx = Gx * phi + bx;
   VectorXd dy = Gy * phi + by;
 
@@ -653,4 +715,73 @@ TEST_CASE("FVM - buildGradients: 3*x*x + 2*y*y") {
       CHECK(dy(i * m + j) == fy(grid.getCenter(i * m + j)));
     }
   } 
+}
+
+TEST_CASE("FVM - calcMassFlux: u, v = x, y") {
+  // TODO: figure out boundaries
+
+  int n = 2;
+  int m = 2;
+  double w = 1;
+  double h = 1;
+  vector<Face> faces = GridBuilder::buildRectangularGrid(n, m, w, h);
+
+  Grid grid = Grid(faces);
+
+  auto uFun = [](Vector position)
+  {
+    double x = position.x();
+    return x;
+  };
+
+  auto vFun = [](Vector position)
+  {
+    double y = position.y();
+    return y;
+  };
+
+  Surface::init(faces, grid);
+
+  vector<std::pair<int, double>> uFix;
+  for (int i = 0; i < faces.size(); i++)
+  {
+    if (faces[i].isWall())
+    {
+      uFix.push_back({i, uFun(faces[i].c)});
+    }
+  }
+  Surface uSf = Surface(uFix);
+
+  vector<std::pair<int, double>> vFix;
+  for (int i = 0; i < faces.size(); i++)
+  {
+    if (faces[i].isWall())
+    {
+      vFix.push_back({i, vFun(faces[i].c)});
+    }
+  }
+  Surface vSf = Surface(vFix);
+
+  VectorXd u(n * m);
+  for (int i = 0; i < n; i++)
+    for (int j = 0; j < m; j++)
+      u(i * m + j) = uFun(grid.getCenter(i * m + j));
+
+  VectorXd v(n * m);
+  for (int i = 0; i < n; i++)
+    for (int j = 0; j < m; j++)
+      v(i * m + j) = vFun(grid.getCenter(i * m + j));
+
+  FVM fvm = FVM(grid);
+
+  VectorXd flux = fvm.calcMassFlux(u, v, uSf, vSf);
+
+  for (int i = 0; i < grid.getM(); i++) {
+    Face face = uSf.getFaces()[i];
+    double expected = face.c.dot(face.n) * face.a;
+
+    CHECK(flux(i) == expected);
+    
+    // cout << "flux(" << i << ") = " << flux(i) << " expected = " << expected << endl;
+  }
 }

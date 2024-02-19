@@ -19,10 +19,12 @@ std::tuple<SpMat, VectorXd, SpMat, VectorXd> FVM::buildGradients(ISurface &surfa
     vector<Vector> distances;
     for (Edge e : grid.getAdj(c))
     {
-      if (!e.isWall()) {
+      if (!e.isWall())
+      {
         distances.push_back(grid.getCenter(e.to) - grid.getCenter(c));
       }
-      else {
+      else
+      {
         distances.push_back(e.c - grid.getCenter(c));
       }
     }
@@ -40,7 +42,8 @@ std::tuple<SpMat, VectorXd, SpMat, VectorXd> FVM::buildGradients(ISurface &surfa
         Gx.coeffRef(c, c) -= gradient(0, i);
         Gy.coeffRef(c, c) -= gradient(1, i);
       }
-      else {
+      else
+      {
         Gx.coeffRef(c, adj.to) += gradient(0, i);
         Gy.coeffRef(c, adj.to) += gradient(1, i);
 
@@ -194,4 +197,89 @@ std::tuple<SpMat, VectorXd> FVM::laplacian(const VectorXd &gamma, ISurface &surf
   // Debug::debugSpMat(M);
 
   return {M, b};
+}
+
+std::tuple<SpMat, VectorXd> FVM::calcConvection(const VectorXd &flux, ISurface &surface)
+{
+  SpMat M(n, n);
+  VectorXd b(n);
+  for (int i = 0; i < n; i++)
+  {
+    for (const Edge &e : grid.getAdj(i))
+    {
+      if (!e.isWall())
+      {
+        M.coeffRef(i, e.to) += flux(e.i);
+      }
+      else
+      {
+        b(i) += flux(e.i);
+      }
+    }
+  }
+
+  return {M, b};
+}
+
+VectorXd FVM::calcMassFlux(const VectorXd &u, const VectorXd &v, ISurface &uSf, ISurface &vSf)
+{
+  assert(u.size() == n);
+  assert(v.size() == n);
+
+  VectorXd flux(m);
+
+  auto [Gux, bux, Guy, buy] = buildGradients(uSf);
+  auto [Gvx, bvx, Gvy, bvy] = buildGradients(vSf);
+
+  VectorXd dux = Gux * u + bux;
+  VectorXd duy = Guy * u + buy;
+  VectorXd dvx = Gvx * v + bvx;
+  VectorXd dvy = Gvy * v + bvy;
+
+  // Debug::debug2d(dux, 2, 2, "dux");
+  // Debug::debug2d(duy, 2, 2, "duy");
+  // Debug::debug2d(dvx, 2, 2, "dvx");
+  // Debug::debug2d(dvy, 2, 2, "dvy");
+
+  // Upwind Differencing
+  auto interpolate = [&](int i, Vector c)
+  {
+    Vector center = grid.getCenter(i);
+    double nu = u(i) + (c - center).dot(Vector(dux(i), duy(i)));
+    double nv = v(i) + (c - center).dot(Vector(dvx(i), dvy(i)));
+    return Vector(nu, nv);
+  };
+
+  for (int i = 0; i < n; i++)
+  {
+    for (const Edge &e : grid.getAdj(i))
+    {
+      if (e.isWall())
+      {
+        double u = uSf.getFixed(e.i).value_or(0);
+        double v = vSf.getFixed(e.i).value_or(0);
+        Vector n = e.side ? e.n : -e.n;
+        flux(e.i) = Vector(u, v).dot(n);
+      }
+      else
+      {
+        Vector velocity = interpolate(i, e.c);
+
+        double f;
+        if ((f = velocity.dot(e.n)) > 0)
+        {
+          if (e.side)
+          {
+            flux(e.i) += f * e.a;
+          }
+          else
+          {
+            flux(e.i) -= f * e.a;
+          }
+        }
+      }
+    }
+  }
+
+  return flux;
 }
